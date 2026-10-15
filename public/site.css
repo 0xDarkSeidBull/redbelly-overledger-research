@@ -35,8 +35,11 @@ a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid 
 .top nav a { display: inline-flex; align-items: center; gap: 8px; color: var(--text-2); text-decoration: none; font-weight: 600; font-size: 14.5px; padding: 7px 16px; border-radius: 999px; transition: background-color 200ms, color 200ms; }
 .top nav a:hover { color: var(--accent-text); }
 /* The page you are on sits in a brand red box. */
-.top nav a[aria-current="page"] { background: var(--container); color: var(--text); }
-.top nav a[aria-current="page"]::before { content: ""; width: 7px; height: 7px; border-radius: 999px; background: var(--brand); box-shadow: 0 0 10px rgba(239, 83, 80, 0.7); }
+.top nav a[aria-current="page"] { background: var(--brand); color: #fff; box-shadow: 0 6px 18px -6px rgba(239, 83, 80, 0.7); }
+.top nav a[aria-current="page"]::before { content: ""; width: 6px; height: 6px; border-radius: 999px; background: #fff; }
+.top nav a:focus { outline: none; }
+.top nav a:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
+a, button { -webkit-tap-highlight-color: transparent; }
 
 main { max-width: 1280px; margin: 0 auto; padding: 0 64px 96px; }
 
@@ -354,9 +357,9 @@ sup.cite a:hover, sup.cite a:focus-visible { background: var(--brand); color: #f
 
 /* ---------- report menu: Key findings and Chapters, chapters as a sub list ---------- */
 .rn { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-.rnav a.rn-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: var(--text); font-weight: 600; font-size: 15px; text-decoration: none; transform: none; }
+.rnav a.rn-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid transparent; border-radius: 10px; color: var(--text); font-weight: 600; font-size: 15px; text-decoration: none; transform: none; }
 .rnav a.rn-item:hover { background: var(--container); transform: none; }
-.rnav a.rn-item.active { background: var(--container); color: var(--text); transform: none; box-shadow: inset 3px 0 0 var(--brand); }
+.rnav a.rn-item.active { background: rgba(239, 83, 80, 0.08); border-color: rgba(239, 83, 80, 0.55); color: var(--text); transform: none; }
 .rn-l { flex: none; width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; font: 600 11.5px var(--mono); color: var(--muted); background: var(--steel); }
 .rn-item.active .rn-l { background: var(--brand); color: #fff; }
 .rn-t { flex: 1; }
@@ -371,10 +374,10 @@ sup.cite a:hover, sup.cite a:focus-visible { background: var(--brand); color: #f
 .rnav .rn-sub > li { min-height: 0; }
 .js .rn-group:not(.open) .rn-sub { grid-template-rows: 0fr; opacity: 0; margin-top: 0; }
 .js .rn-group:not(.open) .rn-sub > li { overflow: hidden; }
-.rnav .rn-sub a { display: flex; gap: 9px; padding: 6px 8px; border-radius: 6px; font-size: 13.5px; color: var(--text-2); }
+.rnav .rn-sub a { display: flex; gap: 9px; padding: 6px 8px; border: 1px solid transparent; border-radius: 8px; font-size: 13.5px; color: var(--text-2); }
 .rnav .rn-sub a .n { font-size: 11.5px; }
 .rnav .rn-sub a:hover { background: var(--container); transform: none; }
-.rnav .rn-sub a.active { color: var(--accent-text); background: rgba(239, 83, 80, 0.08); transform: none; }
+.rnav .rn-sub a.active { color: var(--accent-text); background: rgba(239, 83, 80, 0.08); border-color: rgba(239, 83, 80, 0.45); transform: none; }
 .rnav .toc-links { padding-top: 14px; border-top: 1px solid var(--hairline); }
 
 /* ---------- bottom dock ---------- */
@@ -411,3 +414,10 @@ body { padding-bottom: 96px; }
   .sheet { bottom: 72px; }
 }
 @media print { .dock, .sheet { display: none !important; } }
+
+/* ---------- typewriter: a chapter title types in with a block cursor ---------- */
+.tw-caret { display: inline-block; width: 0.42em; height: 0.92em; margin-left: 0.08em; vertical-align: -0.1em; border-radius: 2px; background: var(--brand); animation: twBlink 0.8s steps(1) infinite; }
+.tw-caret.done { animation: twBlink 0.8s steps(1) 3, twOut 300ms 2.4s forwards; }
+@keyframes twBlink { 50% { opacity: 0; } }
+@keyframes twOut { to { opacity: 0; width: 0; margin: 0; } }
+.chap-of .tw-caret { height: 1em; }

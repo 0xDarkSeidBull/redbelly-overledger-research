@@ -271,7 +271,7 @@ def post_count(t):
 def summary_html(mode):
     cs = R["community_summary"]; n = len(R["sections"]) + 1
     paras = "".join(f'<p class="sum-p" data-raw="{esc(p)}">{esc(p)}</p>' for p in cs["paragraphs"])
-    h = (f'<section class="s" id="summary" aria-labelledby="h-summary">' + (chapter_top("summary") if mode == "web" else "") + '<div class="rv"><p class="kicker"><span class="bar"></span><span class="num">{nn(n)}</span>Share it</p>'
+    h = (f'<section class="s" id="summary" aria-labelledby="h-summary">' + (chapter_top("summary") if mode == "web" else "") + f'<div class="rv"><p class="kicker"><span class="bar"></span><span class="num">{nn(n)}</span>Share it</p>'
          f'<h2 id="h-summary">Community summary</h2><p class="intro">Plain language, ready for the DAO to share. Copy the paragraphs, a single post, or the whole thread.</p></div>')
     btn = lambda attrs, label, msg, extra="": (f'<button class="copy{extra}" type="button" {attrs} data-msg="{msg}">{ICON["copy"]}<span class="lbl">{label}</span></button>')
     h += (f'<div class="share rv"><div class="shead"><h3>A few paragraphs</h3>' +

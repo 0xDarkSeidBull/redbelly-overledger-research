@@ -52,6 +52,8 @@
         $$(".rv", e).forEach(function (r) { r.classList.add("in"); });
         if (!first && !reduce) { e.classList.remove("view-in"); void e.offsetWidth; e.classList.add("view-in"); }
       });
+      twJob++;
+      if (view !== "home") typeTitle(document.getElementById(view));
     }
     var off = window.innerWidth <= 1080 ? 64 : 16;
     if (el && el.id !== view && !(view === "home" && el.id === "findings" && first)) {
@@ -62,6 +64,25 @@
     current = -1; setActive(); onScroll();
   }
   var chapterMode = chapEls.length > 0;
+
+  // Typewriter: when a chapter opens, its title types in behind a red block cursor.
+  var twJob = 0;
+  function typeTitle(sec) {
+    var h = sec && $("h2", sec);
+    if (!h || reduce) return;
+    var full = h.getAttribute("data-full") || h.textContent;
+    h.setAttribute("data-full", full); h.setAttribute("aria-label", full);
+    var job = ++twJob, i = 0, txt = document.createElement("span"), caret = document.createElement("span");
+    caret.className = "tw-caret"; caret.setAttribute("aria-hidden", "true");
+    txt.setAttribute("aria-hidden", "true");
+    h.textContent = ""; h.appendChild(txt); h.appendChild(caret);
+    (function step() {
+      if (job !== twJob) { h.textContent = full; return; }
+      i = Math.min(full.length, i + (full.length > 40 ? 2 : 1));
+      txt.textContent = full.slice(0, i);
+      if (i < full.length) setTimeout(step, 28); else caret.classList.add("done");
+    })();
+  }
 
   function setActive() {
     if (!targets.length) return;
