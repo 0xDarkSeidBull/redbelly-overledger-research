@@ -323,7 +323,7 @@ def report_nav():
             f'<li><a class="rn-item" href="#findings" data-t="findings"><span class="rn-l">A</span><span class="rn-t">Key findings</span></a></li>'
             f'<li class="rn-group open"><div class="rn-row"><a class="rn-item" href="#chapters" data-t="chapters"><span class="rn-l">B</span><span class="rn-t">Chapters</span>'
             f'<span class="cnt">{len(ch)}</span></a><button class="rn-tog" type="button" aria-expanded="true" aria-controls="rn-sub" aria-label="Show or hide the chapters">{ICON["chev"]}</button></div>'
-            f'<ol class="rn-sub" id="rn-sub">{subs}</ol></li></ol>'
+            f'<div class="rn-subw" id="rn-sub"><ol class="rn-sub">{subs}</ol></div></li></ol>'
             f'<div class="toc-links"><a href="downloads/{PDF_NAME}">{ICON["pdf"]}Download PDF</a><a href="downloads/{DOCX_NAME}">{ICON["doc"]}Word file</a><a href="sources.html">{ICON["list"]}Source list</a></div></aside>')
 
 def dock_report():
