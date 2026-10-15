@@ -80,7 +80,7 @@
       if (job !== twJob) { h.textContent = full; return; }
       i = Math.min(full.length, i + (full.length > 40 ? 2 : 1));
       txt.textContent = full.slice(0, i);
-      if (i < full.length) setTimeout(step, 28); else caret.classList.add("done");
+      if (i < full.length) setTimeout(step, 28); else setTimeout(function () { if (job === twJob) h.textContent = full; }, 350);
     })();
   }
 
