@@ -151,8 +151,7 @@ def plain(t):
 
 def pill(kind, text=None):
     text = text or LABELS.get(kind, kind)
-    icon = {"confirmed": "check", "tested": "tested", "analysis": "analysis", "unknown": "unknown", "notyet": "notyet", "none": "none"}.get(kind, "none")
-    return f'<span class="pill {kind}">{ICON[icon]}{esc(text)}</span>'
+    return f'<span class="pill {kind}"><span class="dot" aria-hidden="true"></span>{esc(text)}</span>'
 
 def svg_inline(did, variant):
     p = PUB / "diagrams" / f"{did}-{variant}.svg"
@@ -210,9 +209,40 @@ def block_html(s, b, mode):
             h += "<ul>" + "".join(f"<li>{rich(li, mode)}</li>" for li in items) + "</ul>"
     return h + "</div>"
 
+def chapters():
+    """The report read as chapters on the website: every section, then the community summary."""
+    return [(s["id"], s["short"], s["kicker"]) for s in R["sections"]] + [("summary", "Community summary", "Share it")]
+
+def chapter_top(cid):
+    ch = chapters(); i = [c[0] for c in ch].index(cid) + 1
+    return (f'<div class="chap-top"><a class="chap-all" href="#chapters">{ICON["left"]}All chapters</a>'
+            f'<span class="chap-of">Chapter {i} of {len(ch)}</span>'
+            f'<span class="chap-meter" aria-hidden="true"><span style="width:{i / len(ch) * 100:.1f}%"></span></span></div>')
+
+def chapter_nav(cid):
+    ch = chapters(); ids = [c[0] for c in ch]; i = ids.index(cid)
+    prev = (f'<a class="chap-prev" href="#{ch[i - 1][0]}" rel="prev"><span class="dir">{ICON["left"]}Previous</span><span class="t">{esc(ch[i - 1][1])}</span></a>'
+            if i > 0 else f'<a class="chap-prev" href="#chapters" rel="prev"><span class="dir">{ICON["left"]}Back to</span><span class="t">Key findings and chapters</span></a>')
+    nxt = (f'<a class="chap-next" href="#{ch[i + 1][0]}" rel="next"><span class="dir">Next{ICON["right"]}</span><span class="t">{esc(ch[i + 1][1])}</span></a>'
+           if i + 1 < len(ch) else f'<a class="chap-next" href="sources.html" rel="next"><span class="dir">Next{ICON["right"]}</span><span class="t">Source list</span></a>')
+    return f'<nav class="chap-nav" aria-label="Chapters">{prev}{nxt}</nav>'
+
+def words_in(html):
+    return len(re.sub(r"<[^>]+>", " ", html).split())
+
+def chapters_html(bodies):
+    ch = chapters(); cards = ""
+    for i, (cid, title, kicker) in enumerate(ch, 1):
+        mins = max(1, round(words_in(bodies[cid]) / 220))
+        cards += (f'<li><a class="chap-card rv" href="#{cid}"><span class="cn">{nn(i)}</span><span class="ck">{esc(kicker)}</span>'
+                  f'<span class="ct">{esc(title)}</span><span class="cm">{mins} min read{ICON["right"]}</span></a></li>')
+    return (f'<section class="s chapters" id="chapters" aria-labelledby="h-chapters"><div class="rv"><p class="kicker"><span class="bar"></span>Read it in parts</p>'
+            f'<h2 id="h-chapters">Chapters</h2><p class="intro">The full report in {len(ch)} short chapters. Open one, then use Next and Previous at the end of each.</p></div>'
+            f'<ol class="chap-grid">{cards}</ol></section>')
+
 def section_html(s, mode):
     i = SEC_NUM[s["id"]]
-    h = (f'<section class="s" id="{s["id"]}" aria-labelledby="h-{s["id"]}"><div class="rv"><p class="kicker"><span class="bar"></span>'
+    h = (f'<section class="s" id="{s["id"]}" aria-labelledby="h-{s["id"]}">' + (chapter_top(s["id"]) if mode == "web" else "") + '<div class="rv"><p class="kicker"><span class="bar"></span>'
          f'<span class="num">{nn(i)}</span>{esc(s["kicker"])}</p><h2 id="h-{s["id"]}">{esc(strip_num(s["title"]))}</h2>')
     if s.get("intro"):
         h += f'<p class="intro">{rich(s["intro"], mode)}</p>'
@@ -223,7 +253,7 @@ def section_html(s, mode):
         h += block_html(s, b, mode)
         for d in figs_for(s["id"], bi):
             h += figure_html(d, mode)
-    return h + "</section>"
+    return h + (chapter_nav(s["id"]) if mode == "web" else "") + "</section>"
 
 def findings_html(mode):
     h = '<section class="s" id="findings" aria-labelledby="h-findings"><div class="rv"><p class="kicker"><span class="bar"></span><span class="num">00</span>Short answer</p><h2 id="h-findings">Key findings</h2></div><div class="verdicts">'
@@ -239,7 +269,7 @@ def post_count(t):
 def summary_html(mode):
     cs = R["community_summary"]; n = len(R["sections"]) + 1
     paras = "".join(f'<p class="sum-p" data-raw="{esc(p)}">{esc(p)}</p>' for p in cs["paragraphs"])
-    h = (f'<section class="s" id="summary" aria-labelledby="h-summary"><div class="rv"><p class="kicker"><span class="bar"></span><span class="num">{nn(n)}</span>Share it</p>'
+    h = (f'<section class="s" id="summary" aria-labelledby="h-summary">' + (chapter_top("summary") if mode == "web" else "") + '<div class="rv"><p class="kicker"><span class="bar"></span><span class="num">{nn(n)}</span>Share it</p>'
          f'<h2 id="h-summary">Community summary</h2><p class="intro">Plain language, ready for the DAO to share. Copy the paragraphs, a single post, or the whole thread.</p></div>')
     btn = lambda attrs, label, msg, extra="": (f'<button class="copy{extra}" type="button" {attrs} data-msg="{msg}">{ICON["copy"]}<span class="lbl">{label}</span></button>')
     h += (f'<div class="share rv"><div class="shead"><h3>A few paragraphs</h3>' +
@@ -251,7 +281,7 @@ def summary_html(mode):
         h += (f'<li class="post"><div class="ptop"><span>Post {i} of {len(cs["thread"])}</span><span class="count{" full" if c > 260 else ""}">{c} / 280</span></div>'
               f'<p class="post-text" data-raw="{esc(txt)}">{esc(txt)}</p>' +
               ("" if mode == "print" else '<div class="pbot">' + btn('data-text="' + esc(txt) + '"', "Copy post", f"Post {i} copied") + "</div>") + "</li>")
-    return h + "</ol></div></section>"
+    return h + "</ol></div>" + (chapter_nav("summary") if mode == "web" else "") + "</section>"
 
 # ---------- shared page parts ----------
 CSS_V = "?v=" + __import__("hashlib").sha256((ROOT / "scripts/site.css").read_bytes() + (ROOT / "scripts/site.js").read_bytes()).hexdigest()[:10]
@@ -302,6 +332,8 @@ def cite_data():
 
 def report_page():
     items = [("findings", "00", "Key findings")] + [(s["id"], nn(SEC_NUM[s["id"]]), s["short"]) for s in R["sections"]] + [("summary", nn(len(R["sections"]) + 1), "Community summary")]
+    bodies = {s["id"]: section_html(s, "web") for s in R["sections"]}
+    bodies["summary"] = summary_html("web")
     toc, chips = toc_html(items, f'<a href="downloads/{PDF_NAME}">{ICON["pdf"]}Download PDF</a><a href="sources.html">{ICON["list"]}Source list</a>')
     nsrc, nfacts = len(ORDER), len(USED)
     hero = (f'<section class="hero" aria-labelledby="title">{HERO_ART}<p class="kicker"><span class="bar"></span>Redbelly DAO community research</p>'
@@ -313,7 +345,8 @@ def report_page():
             f'<a class="btn" href="sources.html">{ICON["list"]}Source list</a></div></section>')
     legend = ('<div class="card rv legend-card"><div class="chead"><h3>How to read the labels</h3></div><ul class="legend">' +
               "".join(f'<li>{pill(k)}<span>{esc(v)}</span></li>' for k, v in R["labels"].items()) + "</ul></div>")
-    body = findings_html("web") + legend + "".join(section_html(s, "web") for s in R["sections"]) + summary_html("web")
+    body = (findings_html("web") + legend + chapters_html(bodies) +
+            "".join(bodies[s["id"]] for s in R["sections"]) + bodies["summary"])
     return (head(R["title"] + " | Redbelly DAO research", R["subtitle"]) + "<body>" + header("report") +
             f'<main id="main">{hero}<div class="layout">{toc}<div class="content">{chips}{body}{foot()}</div></div></main>' +
             '<div class="viewer" aria-hidden="true" role="dialog" aria-label="Figure, full screen"><button class="close" type="button" aria-label="Close">' + ICON["close"] + '</button><div class="vin"></div></div>' +

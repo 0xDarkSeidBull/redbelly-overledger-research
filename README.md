@@ -83,7 +83,8 @@ Playwright needs Chromium. `pdftotext` (poppler) is used by the check.
 
 ## The website
 
-- **Report** (`index.html`): key findings first, then ten sections with a sticky, animated "On this page" menu, seven diagrams (each can open full screen), and the community summary with a copy button for the paragraphs, each X post and the whole thread.
+- **Report** (`index.html`): opens on the key findings and a list of 11 chapters, each with its reading time. A chapter opens on its own, with "Chapter 3 of 11", a progress bar, and Previous and Next at the end, so the report is not one long scroll. The side menu jumps between chapters, and links to a figure open the right chapter. It has seven diagrams (each can open full screen) and the community summary with a copy button for the paragraphs, each X post and the whole thread. Without JavaScript the page shows every chapter in one scroll, so nothing is lost.
+- Status labels (Confirmed, Tested, Analysis, Unknown) use a small coloured dot, not icons.
 - **Sources** (`sources.html`): every source in groups, with the exact quoted words, where each is used in the report, and a filter. A citation such as S5 in the report opens the source list at S5 and marks it with a red box. Hovering a citation shows the quoted words first.
 - A red button at the bottom left switches between the two pages, and a button at the bottom right goes back to the top.
 

@@ -31,16 +31,58 @@
     ind.style.height = Math.max(18, r.height - 8) + "px";
     ind.style.opacity = "1";
   }
+  // ---------- chapters: the report opens on the key findings and a chapter list, and shows one chapter at a time ----------
+  var chapIds = $$(".chap-card").map(function (a) { return a.getAttribute("href").slice(1); });
+  var chapEls = chapIds.map(function (id) { return document.getElementById(id); }).filter(Boolean);
+  var homeEls = [$(".hero"), $("#findings"), $(".legend-card"), $("#chapters")].filter(Boolean);
+  var view = null;
+  function chapterOf(el) {
+    for (var n = el; n; n = n.parentNode) { if (n.id && chapIds.indexOf(n.id) !== -1) return n.id; }
+    return null;
+  }
+  function route(first) {
+    var h = decodeURIComponent(location.hash.slice(1)), el = h ? document.getElementById(h) : null;
+    var next = el ? chapterOf(el) || "home" : "home";
+    if (next !== view) {
+      view = next;
+      homeEls.forEach(function (e) { e.hidden = view !== "home"; });
+      chapEls.forEach(function (e) { e.hidden = e.id !== view; e.classList.toggle("chap-view", e.id === view); });
+      var shown = view === "home" ? homeEls : [document.getElementById(view)];
+      shown.forEach(function (e) {
+        $$(".rv", e).forEach(function (r) { r.classList.add("in"); });
+        if (!first && !reduce) { e.classList.remove("view-in"); void e.offsetWidth; e.classList.add("view-in"); }
+      });
+    }
+    var off = window.innerWidth <= 1080 ? 64 : 16;
+    if (el && el.id !== view && !(view === "home" && el.id === "findings" && first)) {
+      window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - off, behavior: "instant" });
+    } else if (!first || view !== "home") {
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
+    current = -1; setActive(); onScroll();
+  }
+  var chapterMode = chapEls.length > 0;
+
   function setActive() {
     if (!targets.length) return;
-    var line = window.innerHeight * 0.32, idx = 0;
-    targets.forEach(function (t, i) { if (t && t.getBoundingClientRect().top <= line) idx = i; });
-    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) idx = targets.length - 1;
-    if (fill && targets[0]) {
-      var first = targets[0].getBoundingClientRect().top + window.scrollY;
-      var last = targets[targets.length - 1].getBoundingClientRect().bottom + window.scrollY - window.innerHeight;
-      var p = last > first ? (window.scrollY - first) / (last - first) : 0;
-      fill.style.transform = "scaleY(" + Math.max(0, Math.min(1, p)) + ")";
+    var idx;
+    if (chapterMode) {
+      idx = view === "home" ? 0 : ids.indexOf(view);
+      if (fill) {
+        var h = document.documentElement.scrollHeight - window.innerHeight;
+        var p = h > 0 ? Math.min(1, window.scrollY / h) : 1;
+        fill.style.transform = "scaleY(" + Math.max(0, Math.min(1, (idx + p) / ids.length)) + ")";
+      }
+    } else {
+      var line = window.innerHeight * 0.32; idx = 0;
+      targets.forEach(function (t, i) { if (t && t.getBoundingClientRect().top <= line) idx = i; });
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) idx = targets.length - 1;
+      if (fill && targets[0]) {
+        var first = targets[0].getBoundingClientRect().top + window.scrollY;
+        var last = targets[targets.length - 1].getBoundingClientRect().bottom + window.scrollY - window.innerHeight;
+        var q = last > first ? (window.scrollY - first) / (last - first) : 0;
+        fill.style.transform = "scaleY(" + Math.max(0, Math.min(1, q)) + ")";
+      }
     }
     if (idx === current) return;
     current = idx;
@@ -60,18 +102,25 @@
   if (targets.length) {
     window.addEventListener("scroll", setActive, { passive: true });
     window.addEventListener("resize", function () { moveMarker(current); setActive(); });
-    setActive();
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { moveMarker(current); });
-    tocLinks.concat(chipLinks).forEach(function (a) {
-      a.addEventListener("click", function (e) {
-        var t = document.getElementById(a.getAttribute("data-t"));
-        if (!t) return;
-        e.preventDefault();
-        var off = window.innerWidth <= 1080 ? 64 : 16;
-        window.scrollTo({ top: t.getBoundingClientRect().top + window.scrollY - off, behavior: reduce ? "auto" : "smooth" });
-        history.replaceState(null, "", "#" + t.id);
+    if (!chapterMode) {
+      setActive();
+      tocLinks.concat(chipLinks).forEach(function (a) {
+        a.addEventListener("click", function (e) {
+          var t = document.getElementById(a.getAttribute("data-t"));
+          if (!t) return;
+          e.preventDefault();
+          var off = window.innerWidth <= 1080 ? 64 : 16;
+          window.scrollTo({ top: t.getBoundingClientRect().top + window.scrollY - off, behavior: reduce ? "auto" : "smooth" });
+          history.replaceState(null, "", "#" + t.id);
+        });
       });
-    });
+    }
+  }
+  if (chapterMode) {
+    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+    window.addEventListener("hashchange", function () { route(false); });
+    route(true);
   }
 
   // ---------- reveal on scroll ----------

@@ -124,7 +124,7 @@ section.s + section.s { border-top: 1px solid var(--hairline); padding-top: 40px
 
 /* status pills */
 .pill { display: inline-flex; align-items: center; gap: 7px; height: 26px; padding: 0 11px; border-radius: 999px; font: 500 11.5px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; border: 1px solid; }
-.pill svg { width: 12px; height: 12px; flex: none; }
+.pill .dot { width: 7px; height: 7px; border-radius: 999px; background: currentColor; flex: none; }
 .pill.confirmed { color: var(--ok); border-color: rgba(134, 239, 172, 0.5); background: rgba(134, 239, 172, 0.07); }
 .pill.tested { color: var(--base); border-color: var(--ok); background: var(--ok); }
 .pill.analysis { color: var(--warn); border-color: rgba(252, 211, 77, 0.5); background: rgba(252, 211, 77, 0.07); }
@@ -321,3 +321,41 @@ sup.cite a:hover, sup.cite a:focus-visible { background: var(--brand); color: #f
 .src .qs li > div { min-width: 0; }
 .src .qs q, .pop q, .card p, .card li, .verdict .a, .tbl td { overflow-wrap: anywhere; }
 .copy.primary.done { background: rgba(134, 239, 172, 0.1); border-color: var(--ok); color: var(--ok); }
+
+/* ---------- chapters ---------- */
+[hidden] { display: none !important; }
+.chap-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.chap-card { position: relative; display: flex; flex-direction: column; gap: 6px; height: 100%; padding: 18px 18px 16px; background: var(--slate); border: 1px solid var(--edge); border-radius: 12px; color: var(--text); text-decoration: none; transition: border-color 250ms var(--ease), transform 250ms var(--ease), background-color 250ms var(--ease); }
+.chap-card:hover, .chap-card:focus-visible { border-color: var(--brand); transform: translateY(-2px); background: var(--container); }
+.chap-card .cn { font: 500 13px var(--mono); color: var(--accent-text); }
+.chap-card .ck { font: 500 11.5px var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.chap-card .ct { font-size: 17px; font-weight: 700; line-height: 1.3; }
+.chap-card .cm { margin-top: auto; padding-top: 8px; display: flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--text-2); }
+.chap-card .cm svg { width: 15px; height: 15px; transition: transform 250ms var(--ease); }
+.chap-card:hover .cm svg { transform: translateX(3px); }
+.chap-top, .chap-nav { display: none; }
+.js .chap-top { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 0 0 22px; padding: 0 0 14px; border-bottom: 1px solid var(--hairline); }
+.chap-all { display: inline-flex; align-items: center; gap: 6px; color: var(--text-2); text-decoration: none; font-size: 14px; font-weight: 600; }
+.chap-all:hover { color: var(--text); }
+.chap-all svg { width: 15px; height: 15px; }
+.chap-of { font: 500 13px var(--mono); color: var(--accent-text); margin-left: auto; }
+.chap-meter { flex: 0 0 140px; height: 4px; border-radius: 999px; background: var(--container); overflow: hidden; }
+.chap-meter span { display: block; height: 100%; background: var(--brand); border-radius: 999px; }
+.js .chap-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 36px 0 8px; }
+.chap-nav a { display: flex; flex-direction: column; gap: 6px; padding: 16px 18px; border: 1px solid var(--edge); border-radius: 12px; background: var(--slate); color: var(--text); text-decoration: none; transition: border-color 250ms var(--ease), background-color 250ms var(--ease); }
+.chap-nav a:hover, .chap-nav a:focus-visible { border-color: var(--brand); background: var(--container); }
+.chap-nav .dir { display: inline-flex; align-items: center; gap: 6px; font: 500 12px var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.chap-nav .dir svg { width: 14px; height: 14px; }
+.chap-nav .t { font-size: 16px; font-weight: 700; line-height: 1.3; }
+.chap-nav .chap-next { text-align: right; align-items: flex-end; }
+.chap-nav .chap-next { grid-column: 2; }
+.js section.s.chap-view { border-top: 0; padding-top: 8px; }
+.view-in { animation: viewIn 380ms var(--ease) both; }
+@keyframes viewIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .view-in { animation: none; } .chap-card, .chap-card .cm svg { transition: none; } }
+@media (max-width: 640px) {
+  .chap-meter { flex-basis: 100%; order: 3; }
+  .chap-of { margin-left: auto; }
+  .js .chap-nav { grid-template-columns: 1fr; }
+  .chap-nav .chap-next { grid-column: 1; }
+}
