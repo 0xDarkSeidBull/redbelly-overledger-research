@@ -1,213 +1,507 @@
 #!/usr/bin/env python3
-"""Builds every output from content/report.json, content/facts.json and content/sources.json:
-  public/index.html                      the report as a web page, with the community summary and source list
-  public/downloads/*.pdf, *.docx         the report as PDF (Playwright print) and Word (python-docx)
-  SOURCES.md, COMMUNITY-SUMMARY.md       the source list and the community summary as Markdown
-  evidence/manifest.json                 URL, capture time (UTC) and SHA-256 of every evidence file
+"""Builds every output from content/report.json, content/facts.json, content/sources.json and the diagrams:
+  public/index.html        the report, with key findings, diagrams and the community summary (copy buttons)
+  public/sources.html      the source list: every source, the exact words relied on, and where each is cited
+  public/site.css, site.js shared style and behaviour (copied from scripts/)
+  public/downloads/        the report as PDF (Playwright print of build/print.html) and Word (python-docx),
+                           plus SOURCES.md and COMMUNITY-SUMMARY.md
+  SOURCES.md, COMMUNITY-SUMMARY.md at the repository root
+Diagrams are hand-written SVG in public/diagrams/ID-wide.svg and ID-narrow.svg, specified in content/diagrams.json.
 """
-import hashlib, html, json, re
-from datetime import datetime, timezone
+import html, json, re, shutil
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+PUB = ROOT / "public"
 SITE = "https://overledger.test-hub.xyz"
 PDF_NAME = "redbelly-overledger-feasibility-report.pdf"
 DOCX_NAME = "redbelly-overledger-feasibility-report.docx"
-LABELS = {"confirmed": "Confirmed", "tested": "Tested", "analysis": "Analysis", "unknown": "Unknown"}
+VERIFIED = "15 Oct 2026"
 
 R = json.loads((ROOT / "content/report.json").read_text())
 FACTS = {f["id"]: f for f in json.loads((ROOT / "content/facts.json").read_text())}
 SOURCES = {s["id"]: s for s in json.loads((ROOT / "content/sources.json").read_text())}
+DIAGRAMS = {d["id"]: d for d in json.loads((ROOT / "content/diagrams.json").read_text())}
 CITE = re.compile(r"\{([a-z0-9 -]+)\}")
+LABELS = {"confirmed": "Confirmed", "tested": "Tested", "analysis": "Analysis", "unknown": "Unknown"}
+# Where each diagram sits: (section id, index of the block it follows; -1 = straight after the section intro)
+FIG_AT = {"stack": ("overledger", 0), "routes": ("how-connect", 0), "access": ("redbelly", 2), "levels": ("now", -1),
+          "work": ("work", -1), "receptor": ("compliance", 0), "breaks": ("compliance", 1)}
+GROUPS = [("g-brief", "The task brief", ["brief"]),
+          ("g-tch", "The Clearing House and Quant", ["tch", "quant-pr"]),
+          ("g-ol", "Overledger documentation", ["ol-"]),
+          ("g-rb", "Redbelly technical documentation", ["rb-"]),
+          ("g-vine", "Vine, Redbelly developer portal", ["vine-"]),
+          ("g-bridges", "Bridge announcements", ["celer", "x-wrbnt"]),
+          ("g-tk", "Tokeniser", ["tk-"]),
+          ("g-task", "Earlier Task Board research", ["task"]),
+          ("g-test", "Our own tests", ["test-"])]
 
-# Number sources in order of first citation.
-order = []
-def walk_text():
-    yield R["status_note"]
-    for k in R["key_findings"]:
-        yield "{" + k["cite"] + "}"
-    for s in R["sections"]:
-        yield s.get("intro", "")
-        for b in s["blocks"]:
-            yield b.get("text", "")
-            for li in b.get("list", []):
-                yield li
-            for row in b.get("rows", []):
-                yield "{" + row[2] + "}"
-for t in walk_text():
-    for m in CITE.finditer(t):
+def group_of(sid):
+    for gid, _, keys in GROUPS:
+        if any(sid == k or (k.endswith("-") and sid.startswith(k)) or (k == "task" and sid.startswith("task")) for k in keys):
+            return gid
+    raise SystemExit(f"source {sid} has no group")
+
+ICON = {
+ "check": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+ "tested": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/></svg>',
+ "analysis": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19l5-6 4 3 7-9"/></svg>',
+ "unknown": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17.2v.1"/></svg>',
+ "notyet": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+ "none": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"/></svg>',
+ "info": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6M12 7.5v.1"/></svg>',
+ "pdf": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>',
+ "doc": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>',
+ "list": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.1M4.5 12h.1M4.5 18h.1"/></svg>',
+ "chat": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>',
+ "right": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+ "left": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>',
+ "up": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>',
+ "copy": '<svg class="ic-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></svg><svg class="ic-done" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+ "expand": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>',
+ "close": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+ "search": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
+ "repo": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14z"/><path d="M8 7h8"/></svg>',
+}
+
+def esc(s):
+    return html.escape(s, quote=True)
+
+def strip_num(title):
+    return re.sub(r"^\d+\.\s*", "", title)
+
+def nn(i):
+    return f"{i:02d}"
+
+# ---------- walk the report in reading order: number sources, figures and record where each fact is used ----------
+ORDER, USED_IN, FIGNUM = [], {}, {}
+SEC = {s["id"]: s for s in R["sections"]}
+SEC_NUM = {s["id"]: i + 1 for i, s in enumerate(R["sections"])}
+
+def figs_for(sec_id, after):
+    return [d for d, (s, a) in FIG_AT.items() if s == sec_id and a == after and d in DIAGRAMS]
+
+def note(text, where):
+    for m in CITE.finditer(text):
         for fid in m.group(1).split():
+            if fid not in FACTS:
+                raise SystemExit(f"unknown fact {fid} in {where}")
             sid = FACTS[fid]["source"]
-            if sid not in order:
-                order.append(sid)
-NUM = {sid: i + 1 for i, sid in enumerate(order)}
+            if sid not in ORDER:
+                ORDER.append(sid)
+            USED_IN.setdefault(fid, [])
+            if where not in USED_IN[fid]:
+                USED_IN[fid].append(where)
 
-def src_href(s):
-    return s["url"] if not s.get("local") else s["url"]
+def walk():
+    note(R["status_note"], "top")
+    for k in R["key_findings"]:
+        note("{" + k["cite"] + "}", "findings")
+    for s in R["sections"]:
+        note(s.get("intro", ""), s["id"])
+        def fig(after):
+            for d in figs_for(s["id"], after):
+                FIGNUM[d] = len(FIGNUM) + 1
+                note(DIAGRAMS[d]["caption"], s["id"])
+        fig(-1)
+        for i, b in enumerate(s["blocks"]):
+            note(b.get("text", ""), s["id"])
+            for li in b.get("list", []):
+                note(li, s["id"])
+            for row in b.get("rows", []):
+                note("{" + row[2] + "}", s["id"])
+            fig(i)
+walk()
+NUM = {sid: i + 1 for i, sid in enumerate(ORDER)}
+USED = set(USED_IN)
 
-def cite_nums(ids):
-    nums = sorted({NUM[FACTS[f]["source"]] for f in ids.split()})
-    return nums
+def where_label(w):
+    if w == "top":
+        return ("Opening note", "top")
+    if w == "findings":
+        return ("Key findings", "findings")
+    return (f"{SEC_NUM[w]}. {SEC[w]['short']}", w)
 
-def render_html(t):
+# ---------- citations ----------
+def cite_html(ids, mode):
+    by = {}
+    for fid in ids.split():
+        by.setdefault(NUM[FACTS[fid]["source"]], []).append(fid)
+    out = []
+    for n in sorted(by):
+        href = f"#s{n}" if mode == "print" else f"sources.html#s{n}"
+        out.append(f'<a href="{href}" data-n="{n}" data-f="{" ".join(by[n])}" aria-label="Source {n}">S{n}</a>')
+    return '<sup class="cite">' + "".join(out) + "</sup>"
+
+def rich(t, mode="web"):
     out, last = [], 0
     for m in CITE.finditer(t):
-        out.append(html.escape(t[last:m.start()]).rstrip())
-        nums = cite_nums(m.group(1))
-        out.append("<sup class='cite'>[" + ", ".join(f"<a href='#src-{n}'>{n}</a>" for n in nums) + "]</sup>")
+        out.append(esc(t[last:m.start()]).rstrip())
+        out.append(cite_html(m.group(1), mode))
         last = m.end()
-    out.append(html.escape(t[last:]))
-    return "".join(out).replace(" <sup", "<sup")
+    out.append(esc(t[last:]))
+    return "".join(out)
 
-def render_plain(t):
+def plain(t):
     def rep(m):
-        return " [" + ", ".join(str(n) for n in cite_nums(m.group(1))) + "]"
+        nums = sorted({NUM[FACTS[f]["source"]] for f in m.group(1).split()})
+        return " [" + ", ".join(f"S{n}" for n in nums) + "]"
     return re.sub(r"\s*\{([a-z0-9 -]+)\}", rep, t)
 
-def chip(label):
-    return f"<span class='chip {label}'>{LABELS[label]}</span>" if label in LABELS else ""
+def pill(kind, text=None):
+    text = text or LABELS.get(kind, kind)
+    icon = {"confirmed": "check", "tested": "tested", "analysis": "analysis", "unknown": "unknown", "notyet": "notyet", "none": "none"}.get(kind, "none")
+    return f'<span class="pill {kind}">{ICON[icon]}{esc(text)}</span>'
 
-# ---------- HTML ----------
-def body_html(print_mode=False):
-    h = []
-    h.append(f"<header class='top'><p class='kicker'>Feasibility report · {html.escape(R['date'])}</p><h1>{html.escape(R['title'])}</h1>"
-             f"<p class='sub'>{html.escape(R['subtitle'])}</p><p class='status'>{render_html(R['status_note'])}</p></header>")
-    h.append("<section id='labels'><h2>How to read this report</h2><dl class='legend'>" +
-             "".join(f"<dt>{chip(k)}</dt><dd>{html.escape(v)}</dd>" for k, v in R["labels"].items()) + "</dl></section>")
-    h.append("<section id='findings'><h2>Key findings</h2><table class='findings'><thead><tr><th>Question</th><th>Answer</th><th>Status</th></tr></thead><tbody>")
-    for k in R["key_findings"]:
-        h.append(f"<tr><td>{html.escape(k['q'])}</td><td>{render_html(k['a'] + ' {' + k['cite'] + '}')}</td><td>{chip(k['label'])}</td></tr>")
-    h.append("</tbody></table></section>")
-    for s in R["sections"]:
-        h.append(f"<section id='{s['id']}'><h2>{html.escape(s['title'])}</h2>")
-        if s.get("intro"):
-            h.append(f"<p class='intro'>{render_html(s['intro'])}</p>")
-        for b in s["blocks"]:
-            lab = b["label"]
-            if lab == "summary_table":
-                h.append("<table class='open'><thead><tr><th>Question</th><th>Answer today</th></tr></thead><tbody>" +
-                         "".join(f"<tr><td>{html.escape(r[0])}</td><td>{render_html(r[1] + ' {' + r[2] + '}')}</td></tr>" for r in b["rows"]) +
-                         "</tbody></table>")
-                continue
-            h.append(f"<div class='block {lab}'>")
-            if lab in LABELS:
-                h.append(chip(lab))
-            if b.get("heading"):
-                h.append(f"<h3>{html.escape(b['heading'])}</h3>")
-            if b.get("text"):
-                h.append(f"<p>{render_html(b['text'])}</p>")
-            if b.get("list"):
-                h.append("<ul>" + "".join(f"<li>{render_html(li)}</li>" for li in b["list"]) + "</ul>")
-            h.append("</div>")
-        h.append("</section>")
-    cs = R["community_summary"]
-    h.append("<section id='summary'><h2>Community summary</h2><p class='intro'>Plain language, ready to share. The same text is in COMMUNITY-SUMMARY.md.</p>")
-    h.append("<div class='summary'>" + "".join(f"<p>{html.escape(p)}</p>" for p in cs["paragraphs"]) + "</div>")
-    h.append("<h3>As an X thread</h3><ol class='thread'>" + "".join(f"<li>{html.escape(t.replace('{site}', SITE))}</li>" for t in cs["thread"]) + "</ol></section>")
-    h.append("<section id='sources'><h2>Source list</h2><p class='intro'>Every factual claim links to one of these sources. Under each source are the exact words the report relies on. "
-             "Text snapshots of every page, with SHA-256 hashes, are in evidence/ in the project repository.</p><ol class='sources'>")
-    for sid in order:
+def svg_inline(did, variant):
+    p = PUB / "diagrams" / f"{did}-{variant}.svg"
+    if not p.exists():
+        return f'<svg viewBox="0 0 960 120" role="img"><title>{esc(DIAGRAMS[did]["title"])}</title><rect x="1" y="1" width="958" height="118" rx="8" fill="#17222a" stroke="#263641"/><text x="480" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-size="18" fill="#8fa1ad">Diagram in progress</text></svg>'
+    s = p.read_text()
+    return re.sub(r"<\?xml[^>]*>\s*", "", s).strip()
+
+def figure_html(did, mode):
+    d = DIAGRAMS[did]; n = FIGNUM[did]
+    zoom = "" if mode == "print" else f'<button class="zoom" type="button" aria-label="Open figure {n} full screen">{ICON["expand"]}Full screen</button>'
+    narrow = "" if mode == "print" else f'<div class="art narrow">{svg_inline(did, "narrow")}</div>'
+    return (f'<figure class="fig rv" id="fig-{did}"><div class="fhead"><div><div class="fk">Figure {n}</div><p class="ft">{esc(d["title"])}</p></div>{zoom}</div>'
+            f'<div class="art wide">{svg_inline(did, "wide")}</div>{narrow}'
+            f'<figcaption>{rich(d["caption"], mode)}</figcaption></figure>')
+
+def table_row(r, mode):
+    ans = r[1]
+    if ans.startswith("Not possible yet"):
+        kind, head = "notyet", "Not possible yet"
+    elif ans.startswith("Unknown"):
+        kind, head = "unknown", "Unknown"
+    else:
+        kind, head = "none", ans.split(",")[0]
+    rest = ans[len(head):].lstrip(", ")
+    why = (rest[0].upper() + rest[1:]) if rest else ""
+    return (f'<tr><td>{esc(r[0])}</td><td>{pill(kind, head)}<span class="why">{esc(why)}{cite_html(r[2], mode)}</span></td></tr>')
+
+def block_html(s, b, mode):
+    lab = b["label"]
+    if lab == "summary_table":
+        return ('<table class="tbl rv"><thead><tr><th scope="col">Question</th><th scope="col">Answer today</th></tr></thead><tbody>' +
+                "".join(table_row(r, mode) for r in b["rows"]) + "</tbody></table>")
+    cls = "card rv" + (" method" if lab == "method" else "")
+    head = pill(lab) if lab in LABELS else pill("none", "How it was done")
+    h = f'<div class="{cls}"><div class="chead">{head}'
+    if b.get("heading"):
+        h += f'<h3>{esc(b["heading"])}</h3>'
+    h += "</div>"
+    if b.get("text"):
+        h += f'<p>{rich(b["text"], mode)}</p>'
+    if b.get("list"):
+        items = b["list"]
+        if s["id"] == "work":
+            h += '<ol class="steps">'
+            for li in items:
+                m = re.match(r"Level (\d), step (\d): (.*)", li)
+                lvl, step, body = m.group(1), m.group(2), m.group(3)
+                body = body[0].upper() + body[1:]
+                h += f'<li class="l{lvl}"><span class="sn">{step}</span><span class="lvl">Level {lvl}, step {step}</span>{rich(body, mode)}</li>'
+            h += "</ol>"
+        elif s["id"] == "compliance" and b.get("heading", "").startswith("Where compliance"):
+            h += '<ol class="breaks">' + "".join(f"<li>{rich(li, mode)}</li>" for li in items) + "</ol>"
+        else:
+            h += "<ul>" + "".join(f"<li>{rich(li, mode)}</li>" for li in items) + "</ul>"
+    return h + "</div>"
+
+def section_html(s, mode):
+    i = SEC_NUM[s["id"]]
+    h = (f'<section class="s" id="{s["id"]}" aria-labelledby="h-{s["id"]}"><div class="rv"><p class="kicker"><span class="bar"></span>'
+         f'<span class="num">{nn(i)}</span>{esc(s["kicker"])}</p><h2 id="h-{s["id"]}">{esc(strip_num(s["title"]))}</h2>')
+    if s.get("intro"):
+        h += f'<p class="intro">{rich(s["intro"], mode)}</p>'
+    h += "</div>"
+    for d in figs_for(s["id"], -1):
+        h += figure_html(d, mode)
+    for bi, b in enumerate(s["blocks"]):
+        h += block_html(s, b, mode)
+        for d in figs_for(s["id"], bi):
+            h += figure_html(d, mode)
+    return h + "</section>"
+
+def findings_html(mode):
+    h = '<section class="s" id="findings" aria-labelledby="h-findings"><div class="rv"><p class="kicker"><span class="bar"></span><span class="num">00</span>Short answer</p><h2 id="h-findings">Key findings</h2></div><div class="verdicts">'
+    for i, k in enumerate(R["key_findings"], 1):
+        cls = "none" if k["verdict"] == "None" else k["label"]
+        h += (f'<article class="verdict rv {cls}"><div class="vtop"><span class="vnum">{nn(i)}</span>{pill(k["label"])}</div>'
+              f'<p class="q">{esc(k["q"])}</p><p class="big">{esc(k["verdict"])}</p><p class="a">{rich(k["a"] + " {" + k["cite"] + "}", mode)}</p></article>')
+    return h + "</div></section>"
+
+def post_count(t):
+    return len(t.replace("{site}", "x" * 23))
+
+def summary_html(mode):
+    cs = R["community_summary"]; n = len(R["sections"]) + 1
+    paras = "".join(f'<p class="sum-p" data-raw="{esc(p)}">{esc(p)}</p>' for p in cs["paragraphs"])
+    h = (f'<section class="s" id="summary" aria-labelledby="h-summary"><div class="rv"><p class="kicker"><span class="bar"></span><span class="num">{nn(n)}</span>Share it</p>'
+         f'<h2 id="h-summary">Community summary</h2><p class="intro">Plain language, ready for the DAO to share. Copy the paragraphs, a single post, or the whole thread.</p></div>')
+    btn = lambda attrs, label, msg, extra="": (f'<button class="copy{extra}" type="button" {attrs} data-msg="{msg}">{ICON["copy"]}<span class="lbl">{label}</span></button>')
+    h += (f'<div class="share rv"><div class="shead"><h3>A few paragraphs</h3>' +
+          ("" if mode == "print" else btn('data-copy=".sum-p"', "Copy summary", "Summary copied", " primary")) + f'</div><div class="body">{paras}</div></div>')
+    h += (f'<div class="share rv"><div class="shead"><h3>As an X thread, {len(cs["thread"])} posts</h3>' +
+          ("" if mode == "print" else btn('data-copy=".post-text"', "Copy all posts", "Thread copied", " primary")) + '</div><ol class="posts">')
+    for i, t in enumerate(cs["thread"], 1):
+        txt = t.replace("{site}", SITE); c = post_count(t)
+        h += (f'<li class="post"><div class="ptop"><span>Post {i} of {len(cs["thread"])}</span><span class="count{" full" if c > 260 else ""}">{c} / 280</span></div>'
+              f'<p class="post-text" data-raw="{esc(txt)}">{esc(txt)}</p>' +
+              ("" if mode == "print" else '<div class="pbot">' + btn('data-text="' + esc(txt) + '"', "Copy post", f"Post {i} copied") + "</div>") + "</li>")
+    return h + "</ol></div></section>"
+
+# ---------- shared page parts ----------
+CSS_V = "?v=" + __import__("hashlib").sha256((ROOT / "scripts/site.css").read_bytes() + (ROOT / "scripts/site.js").read_bytes()).hexdigest()[:10]
+
+def head(title, desc):
+    return (f'<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
+            f'<title>{esc(title)}</title><meta name="description" content="{esc(desc)}"><meta name="theme-color" content="#0c1317">'
+            f'<meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(desc)}"><meta property="og:type" content="article">'
+            f'<link rel="icon" href="brand/dao-logo-on-dark.png"><link rel="preload" href="fonts/be-vietnam-pro-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>'
+            f'<link rel="stylesheet" href="site.css{CSS_V}"></head>')
+
+def header(current):
+    def link(href, label, key):
+        cur = ' aria-current="page"' if key == current else ""
+        return f'<a href="{href}"{cur}>{label}</a>'
+    return ('<div class="progress" aria-hidden="true"><span></span></div>'
+            '<header class="top"><a class="brand" href="index.html"><img src="brand/dao-logo-on-dark.png" alt="Redbelly DAO" width="62" height="44"></a>'
+            f'<nav aria-label="Pages">{link("index.html", "Report", "report")}{link("sources.html", "Sources", "sources")}</nav></header>')
+
+def toc_html(items, extra_links):
+    lis = "".join(f'<li><a href="#{i}" data-t="{i}"><span class="n">{n}</span><span>{esc(t)}</span></a></li>' for i, n, t in items)
+    chips = "".join(f'<li><a href="#{i}" data-t="{i}"><span class="n">{n}</span>{esc(t)}</a></li>' for i, n, t in items)
+    return (f'<aside class="toc" aria-label="On this page"><p class="toc-head">On this page</p><div class="toc-track"><span class="toc-fill"></span><span class="toc-ind"></span><ol>{lis}</ol></div>'
+            f'<div class="toc-links">{extra_links}</div></aside>', f'<nav class="chips" aria-label="On this page"><ol>{chips}</ol></nav>')
+
+def foot():
+    return ('<footer class="foot"><div><p>Feasibility research only. Redbelly and Quant have no announced partnership or talks, and nothing on this site suggests otherwise.</p>'
+            f'<p>Sources last verified {VERIFIED}. Every claim links to the source list; page snapshots, tests and the check script are in the project repository that came with this report.</p></div>'
+            '<div><p>Fonts: Be Vietnam Pro and JetBrains Mono, SIL Open Font License 1.1. Logo: Redbelly DAO, from the Task Board brand kit.</p>'
+            '<p>Diagrams drawn for this report. No third-party images or icons.</p></div></footer>')
+
+def floats(switch_href, switch_label, direction):
+    return (f'<a class="page-switch" href="{switch_href}" aria-label="{switch_label}">{ICON[direction]}<span class="tip">{switch_label}</span></a>'
+            f'<button class="to-top" type="button" aria-label="Back to top">{ICON["up"]}</button>'
+            '<div class="toast" role="status" aria-live="polite"></div>')
+
+HERO_ART = ('<svg class="hero-art" viewBox="0 0 300 220" aria-hidden="true" focusable="false">'
+            '<g stroke="#345062" stroke-width="1.2" fill="none">'
+            '<path d="M40 60L120 40L200 70L260 40M40 60L90 130L170 120L200 70M90 130L60 190M170 120L240 160L260 40M170 120L150 190"/></g>'
+            '<g fill="#17222a" stroke="#4a6375" stroke-width="1.5"><circle cx="40" cy="60" r="7"/><circle cx="120" cy="40" r="6"/><circle cx="260" cy="40" r="6"/>'
+            '<circle cx="90" cy="130" r="6"/><circle cx="60" cy="190" r="5"/><circle cx="240" cy="160" r="7"/><circle cx="150" cy="190" r="5"/></g>'
+            '<circle cx="200" cy="70" r="9" fill="#1d3140" stroke="#EF5350" stroke-width="2"/><circle cx="170" cy="120" r="9" fill="#1d3140" stroke="#8fa1ad" stroke-width="1.5" stroke-dasharray="3 3"/>'
+            '</svg>')
+
+def cite_data():
+    return json.dumps({"sources": {str(NUM[s]): {"p": SOURCES[s]["publisher"], "t": SOURCES[s]["title"]} for s in ORDER},
+                       "facts": {f: FACTS[f]["quote"] for f in sorted(USED)}}, ensure_ascii=False).replace("</", "<\\/")
+
+def report_page():
+    items = [("findings", "00", "Key findings")] + [(s["id"], nn(SEC_NUM[s["id"]]), s["short"]) for s in R["sections"]] + [("summary", nn(len(R["sections"]) + 1), "Community summary")]
+    toc, chips = toc_html(items, f'<a href="downloads/{PDF_NAME}">{ICON["pdf"]}Download PDF</a><a href="sources.html">{ICON["list"]}Source list</a>')
+    nsrc, nfacts = len(ORDER), len(USED)
+    hero = (f'<section class="hero" aria-labelledby="title">{HERO_ART}<p class="kicker"><span class="bar"></span>Redbelly DAO community research</p>'
+            f'<h1 id="title">{esc(R["title"])}</h1><p class="lead">{esc(R["subtitle"])}. What Overledger is, whether Redbelly can reach it, what that would take, and where compliance could break.</p>'
+            f'<div class="notice">{ICON["info"]}<p>{rich(R["status_note"])}</p></div>'
+            f'<p class="meta-row"><span>Last verified <b>{VERIFIED}</b></span><span><b>{nsrc}</b> sources</span><span><b>{nfacts}</b> quoted facts</span><span><b>{len(FIGNUM)}</b> diagrams</span></p>'
+            f'<div class="actions"><a class="btn primary" href="downloads/{PDF_NAME}">{ICON["pdf"]}Download PDF</a>'
+            f'<a class="btn" href="downloads/{DOCX_NAME}">{ICON["doc"]}Word file</a><a class="btn" href="#summary">{ICON["chat"]}Community summary</a>'
+            f'<a class="btn" href="sources.html">{ICON["list"]}Source list</a></div></section>')
+    legend = ('<div class="card rv legend-card"><div class="chead"><h3>How to read the labels</h3></div><ul class="legend">' +
+              "".join(f'<li>{pill(k)}<span>{esc(v)}</span></li>' for k, v in R["labels"].items()) + "</ul></div>")
+    body = findings_html("web") + legend + "".join(section_html(s, "web") for s in R["sections"]) + summary_html("web")
+    return (head(R["title"] + " | Redbelly DAO research", R["subtitle"]) + "<body>" + header("report") +
+            f'<main id="main">{hero}<div class="layout">{toc}<div class="content">{chips}{body}{foot()}</div></div></main>' +
+            '<div class="viewer" aria-hidden="true" role="dialog" aria-label="Figure, full screen"><button class="close" type="button" aria-label="Close">' + ICON["close"] + '</button><div class="vin"></div></div>' +
+            floats("sources.html", "Source list", "right") + f'<script type="application/json" id="cite-data">{cite_data()}</script><script src="site.js{CSS_V}"></script></body></html>')
+
+def snapshot_info(s):
+    import hashlib
+    p = (ROOT / "evidence/snapshots" / s["file"]).resolve()
+    rel = p.relative_to(ROOT)
+    man = {m["file"]: m for m in json.loads((ROOT / "evidence/manifest.json").read_text())}
+    m = man.get(str(rel))
+    sha = m["sha256"] if m else hashlib.sha256(p.read_bytes()).hexdigest()
+    when = (m["captured_utc"].replace("T", " ").replace("Z", " UTC")) if m else ""
+    return str(rel), sha, when
+
+def sources_page():
+    items, groups = [], []
+    for gid, gname, _ in GROUPS:
+        srcs = [s for s in ORDER if group_of(s) == gid]
+        srcs.sort(key=lambda s: NUM[s])
+        if srcs:
+            items.append((gid, nn(len(items) + 1), gname)); groups.append((gid, gname, srcs))
+    toc, chips = toc_html(items, f'<a href="index.html">{ICON["left"]}Back to the report</a><a href="downloads/SOURCES.md">{ICON["doc"]}Source list as Markdown</a>')
+    hero = (f'<section class="hero" aria-labelledby="title"><p class="kicker"><span class="bar"></span>Source list</p><h1 id="title">Where every fact comes from</h1>'
+            f'<p class="lead">The report cites each source as S1, S2 and so on. Under each one are the exact words the report relies on, so you can find them on the page with Ctrl+F, and links back to where each is used.</p>'
+            f'<div class="notice">{ICON["info"]}<p>A text copy of every page as it read on {VERIFIED} is kept in the project repository under evidence/snapshots, with its SHA-256 in evidence/manifest.json. The check script fails if any quote is missing from its copy.</p></div>'
+            f'<p class="meta-row"><span><b>{len(ORDER)}</b> sources</span><span><b>{len(USED)}</b> quoted facts</span><span>Last verified <b>{VERIFIED}</b></span></p>'
+            f'<div class="actions"><a class="btn primary" href="index.html">{ICON["left"]}Back to the report</a><a class="btn" href="downloads/{PDF_NAME}">{ICON["pdf"]}Download PDF</a>'
+            f'<a class="btn" href="downloads/SOURCES.md">{ICON["doc"]}Source list as Markdown</a></div></section>')
+    body = (f'<div class="filter rv">{ICON["search"]}<label class="sr" for="q">Filter sources</label><input id="q" type="search" placeholder="Filter by publisher, title or quoted words" autocomplete="off">'
+            f'<span class="fc">{len(ORDER)} of {len(ORDER)} sources</span></div><p class="empty">No source matches that filter.</p>')
+    for gid, gname, srcs in groups:
+        body += f'<section class="group" id="{gid}"><h2>{esc(gname)}<span class="gn">{len(srcs)} {"source" if len(srcs) == 1 else "sources"}</span></h2>'
+        for sid in srcs:
+            s = SOURCES[sid]; n = NUM[sid]
+            if s.get("local"):
+                url = f'<a class="su" href="{esc(s["url"])}">{esc(s["url"])}</a>'
+            else:
+                url = f'<a class="su" href="{esc(s["url"])}" target="_blank" rel="noopener">{esc(s["url"])}</a>'
+            rel, sha, when = snapshot_info(s)
+            body += (f'<article class="src" id="s{n}"><div class="sh"><span class="sn">S{n}</span><div><span class="sp">{esc(s["publisher"])}</span>'
+                     f'<p class="st">{esc(s["title"])}</p>{url}</div></div>'
+                     f'<p class="snap">Saved copy: {esc(rel)} · captured {esc(when)} · SHA-256 {sha[:12]}…{sha[-6:]}</p><ul class="qs">')
+            for f in (f for f in FACTS.values() if f["source"] == sid and f["id"] in USED):
+                used = ", ".join(f'<a href="index.html#{where_label(w)[1]}">{esc(where_label(w)[0])}</a>' for w in USED_IN[f["id"]])
+                body += (f'<li><div><q>{esc(f["quote"])}</q><span class="used">Used in {used}</span></div>'
+                         f'<button class="copy" type="button" data-text="{esc(f["quote"])}" data-msg="Quote copied" aria-label="Copy this quote">{ICON["copy"]}<span class="lbl">Copy</span></button></li>')
+            body += "</ul></article>"
+        body += "</section>"
+    return (head("Source list | " + R["title"], "Every source behind the Overledger and Redbelly feasibility report, with the exact words relied on.") +
+            "<body>" + header("sources") + f'<main id="main">{hero}<div class="layout">{toc}<div class="content">{chips}{body}{foot()}</div></div></main>' +
+            floats("index.html", "Back to the report", "left") + f'<script src="site.js{CSS_V}"></script></body></html>')
+
+# ---------- print version for the PDF ----------
+def drop_small_screen_rules(css):
+    """An A4 page is narrower than the phone breakpoint, so the PDF must not pick up the small-screen layout."""
+    out, i = [], 0
+    while True:
+        j = css.find("@media (max-width", i)
+        if j < 0:
+            out.append(css[i:]); break
+        out.append(css[i:j])
+        k = css.index("{", j); depth = 1; k += 1
+        while depth:
+            depth += {"{": 1, "}": -1}.get(css[k], 0); k += 1
+        i = k
+    return "".join(out)
+
+def print_page():
+    fonts = (PUB / "fonts").as_uri()
+    css = drop_small_screen_rules((ROOT / "scripts/site.css").read_text()).replace('url("fonts/', f'url("{fonts}/') + (ROOT / "scripts/print.css").read_text()
+    logo = (PUB / "brand/dao-logo-on-dark.png").as_uri()
+    hero = (f'<section class="hero"><img class="plogo" src="{logo}" alt="Redbelly DAO"><p class="kicker"><span class="bar"></span>Redbelly DAO community research · Feasibility report · {VERIFIED}</p>'
+            f'<h1>{esc(R["title"])}</h1><p class="lead">{esc(R["subtitle"])}.</p><div class="notice">{ICON["info"]}<p>{rich(R["status_note"], "print")}</p></div>'
+            f'<p class="meta-row"><span><b>{len(ORDER)}</b> sources</span><span><b>{len(USED)}</b> quoted facts</span><span>Web version <b>{SITE.replace("https://", "")}</b></span></p></section>')
+    legend = ('<div class="card legend-card"><div class="chead"><h3>How to read the labels</h3></div><ul class="legend">' +
+              "".join(f'<li>{pill(k)}<span>{esc(v)}</span></li>' for k, v in R["labels"].items()) + "</ul></div>")
+    body = findings_html("print") + legend + "".join(section_html(s, "print") for s in R["sections"]) + summary_html("print")
+    src = '<section class="s srcs" id="sources"><p class="kicker"><span class="bar"></span>Sources</p><h2>Source list</h2><p class="intro">Each source with the exact words this report relies on. Page copies with SHA-256 hashes are in the project repository.</p><ol class="plist">'
+    for sid in ORDER:
         s = SOURCES[sid]; n = NUM[sid]
-        quotes = [f for f in FACTS.values() if f["source"] == sid and used(f["id"])]
-        link = (f"<a href='{html.escape(s['url'])}'>{html.escape(s['url'])}</a>" if not s.get("local")
-                else f"<span class='mono'>{html.escape(s['url'])}</span> in the project repository")
-        h.append(f"<li id='src-{n}'><p><strong>{html.escape(s['publisher'])}</strong>: {html.escape(s['title'])}<br>{link}</p><ul class='quotes'>" +
-                 "".join(f"<li>“{html.escape(q['quote'])}”</li>" for q in quotes) + "</ul></li>")
-    h.append("</ol></section>")
-    return "\n".join(h)
+        src += (f'<li id="s{n}"><b>S{n}</b> <span>{esc(s["publisher"])}: {esc(s["title"])}</span><br><span class="u">{esc(s["url"] if not s.get("local") else s["url"] + " (project repository)")}</span><ul>' +
+                "".join(f'<li>“{esc(f["quote"])}”</li>' for f in FACTS.values() if f["source"] == sid and f["id"] in USED) + "</ul></li>")
+    src += "</ol></section>"
+    return (f'<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><title>{esc(R["title"])}</title><style>{css}</style></head>'
+            f'<body class="print"><main>{hero}{body}{src}</main></body></html>')
 
-USED = set()
-for t in walk_text():
-    for m in CITE.finditer(t):
-        USED.update(m.group(1).split())
-for b in (b for s in R["sections"] for b in s["blocks"]):
-    for row in b.get("rows", []):
-        USED.update(row[2].split())
-def used(fid):
-    return fid in USED
+# ---------- Word ----------
+def render_pngs():
+    out = {}
+    from playwright.sync_api import sync_playwright
+    fonts = (PUB / "fonts").as_uri()
+    face = "".join(f'@font-face{{font-family:"{fam}";src:url({fonts}/{f});font-weight:{w}}}' for fam, f, w in
+                   [("Be Vietnam Pro", "be-vietnam-pro-latin-400-normal.woff2", 400), ("Be Vietnam Pro", "be-vietnam-pro-latin-500-normal.woff2", 500),
+                    ("Be Vietnam Pro", "be-vietnam-pro-latin-600-normal.woff2", 600), ("Be Vietnam Pro", "be-vietnam-pro-latin-700-normal.woff2", 700),
+                    ("JetBrains Mono", "jetbrains-mono-latin-400-normal.woff2", 400), ("JetBrains Mono", "jetbrains-mono-latin-500-normal.woff2", 500)])
+    with sync_playwright() as p:
+        b = p.chromium.launch(); pg = b.new_page(viewport={"width": 1000, "height": 800}, device_scale_factor=2)
+        for did in FIGNUM:
+            tmp = ROOT / "build" / f"fig-{did}.html"
+            tmp.write_text(f'<html><head><meta charset="utf-8"><style>{face}body{{margin:0;background:#141f26}}.w{{width:960px;padding:20px}}svg{{display:block;width:100%;height:auto}}</style></head>'
+                           f'<body><div class="w">{svg_inline(did, "wide")}</div></body></html>')
+            pg.goto(tmp.as_uri()); pg.evaluate("document.fonts.ready.then(() => true)"); pg.wait_for_timeout(300)
+            f = ROOT / "build" / f"fig-{did}.png"; pg.locator(".w").screenshot(path=str(f)); out[did] = f
+        b.close()
+    return out
 
-CSS = (ROOT / "scripts/report.css").read_text()
-
-def page(print_mode):
-    nav = "" if print_mode else (
-        "<nav class='bar'><a class='brand' href='#'>Overledger and Redbelly</a><span class='links'>"
-        "<a href='#findings'>Findings</a><a href='#summary'>Community summary</a><a href='#sources'>Sources</a>"
-        f"<a class='dl' href='downloads/{PDF_NAME}'>PDF</a><a class='dl' href='downloads/{DOCX_NAME}'>Word</a></span></nav>")
-    return (f"<!doctype html><html lang='en-AU'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>"
-            f"<title>{html.escape(R['title'])}</title><meta name='description' content='{html.escape(R['subtitle'])}'>"
-            f"<style>{CSS if not print_mode else CSS.replace('url(fonts/', 'url(' + (ROOT / 'public/fonts').as_uri() + '/')}</style></head><body class='{'print' if print_mode else 'web'}'>{nav}<main>{body_html(print_mode)}</main></body></html>")
-
-# ---------- DOCX ----------
-def build_docx(path):
+def build_docx(path, pngs):
     from docx import Document
-    from docx.shared import Pt, RGBColor
+    from docx.shared import Pt, RGBColor, Cm
     d = Document()
     st = d.styles["Normal"]; st.font.name = "Calibri"; st.font.size = Pt(10.5)
+    for sec in d.sections:
+        sec.left_margin = sec.right_margin = Cm(2)
     d.add_heading(R["title"], 0)
-    d.add_paragraph(R["subtitle"]).runs[0].italic = True
-    d.add_paragraph(f"Feasibility report, {R['date']}")
-    d.add_paragraph(render_plain(R["status_note"]))
-    d.add_heading("How to read this report", 1)
+    d.add_paragraph(R["subtitle"] + ".").runs[0].italic = True
+    d.add_paragraph(f"Redbelly DAO community research. Feasibility report, sources last verified {VERIFIED}. Web version: {SITE}")
+    d.add_paragraph(plain(R["status_note"]))
+    d.add_heading("How to read the labels", 1)
     for k, v in R["labels"].items():
         p = d.add_paragraph(style="List Bullet"); r = p.add_run(LABELS[k] + ": "); r.bold = True; p.add_run(v)
     d.add_heading("Key findings", 1)
-    t = d.add_table(rows=1, cols=3); t.style = "Light Grid Accent 2"
-    for i, x in enumerate(("Question", "Answer", "Status")):
+    t = d.add_table(rows=1, cols=4); t.style = "Light Grid Accent 2"
+    for i, x in enumerate(("Question", "Short answer", "Detail", "Status")):
         t.rows[0].cells[i].text = x
     for k in R["key_findings"]:
-        c = t.add_row().cells; c[0].text = k["q"]; c[1].text = render_plain(k["a"] + " {" + k["cite"] + "}"); c[2].text = LABELS[k["label"]]
+        c = t.add_row().cells; c[0].text = k["q"]; c[1].text = k["verdict"]; c[2].text = plain(k["a"] + " {" + k["cite"] + "}"); c[3].text = LABELS[k["label"]]
+    def add_fig(did):
+        d.add_picture(str(pngs[did]), width=Cm(17))
+        cap = d.add_paragraph(); r = cap.add_run(f"Figure {FIGNUM[did]}. {DIAGRAMS[did]['title']}. "); r.bold = True
+        cap.add_run(plain(DIAGRAMS[did]["caption"]))
     for s in R["sections"]:
-        d.add_heading(s["title"], 1)
+        d.add_heading(f"{SEC_NUM[s['id']]}. {strip_num(s['title'])}", 1)
         if s.get("intro"):
-            d.add_paragraph(render_plain(s["intro"]))
-        for b in s["blocks"]:
+            d.add_paragraph(plain(s["intro"]))
+        for did in figs_for(s["id"], -1):
+            add_fig(did)
+        for bi, b in enumerate(s["blocks"]):
             if b["label"] == "summary_table":
                 t = d.add_table(rows=1, cols=2); t.style = "Light Grid Accent 2"
                 t.rows[0].cells[0].text = "Question"; t.rows[0].cells[1].text = "Answer today"
                 for r in b["rows"]:
-                    c = t.add_row().cells; c[0].text = r[0]; c[1].text = render_plain(r[1] + " {" + r[2] + "}")
-                continue
-            if b.get("heading"):
-                d.add_heading(b["heading"], 2)
-            if b.get("text"):
-                p = d.add_paragraph()
-                if b["label"] in LABELS:
-                    r = p.add_run(f"[{LABELS[b['label']]}] "); r.bold = True; r.font.color.rgb = RGBColor(0xC6, 0x28, 0x28)
-                p.add_run(render_plain(b["text"]))
-            if b.get("list"):
-                if b["label"] in LABELS and not b.get("text"):
-                    r = d.add_paragraph().add_run(f"[{LABELS[b['label']]}]"); r.bold = True; r.font.color.rgb = RGBColor(0xC6, 0x28, 0x28)
-                for li in b["list"]:
-                    d.add_paragraph(render_plain(li), style="List Bullet")
+                    c = t.add_row().cells; c[0].text = r[0]; c[1].text = plain(r[1] + " {" + r[2] + "}")
+            else:
+                if b.get("heading"):
+                    d.add_heading(b["heading"], 2)
+                tag = LABELS.get(b["label"], "Method")
+                if b.get("text"):
+                    p = d.add_paragraph(); r = p.add_run(f"[{tag}] "); r.bold = True; r.font.color.rgb = RGBColor(0xC6, 0x28, 0x28)
+                    p.add_run(plain(b["text"]))
+                if b.get("list"):
+                    if not b.get("text"):
+                        r = d.add_paragraph().add_run(f"[{tag}]"); r.bold = True; r.font.color.rgb = RGBColor(0xC6, 0x28, 0x28)
+                    style = "List Number" if (s["id"] in ("work", "compliance") and (s["id"] == "work" or b.get("heading", "").startswith("Where"))) else "List Bullet"
+                    for li in b["list"]:
+                        d.add_paragraph(plain(li), style=style)
+            for did in figs_for(s["id"], bi):
+                add_fig(did)
     cs = R["community_summary"]
-    d.add_heading("Community summary", 1)
+    d.add_heading(f"{len(R['sections']) + 1}. Community summary", 1)
     for p in cs["paragraphs"]:
         d.add_paragraph(p)
     d.add_heading("As an X thread", 2)
     for x in cs["thread"]:
         d.add_paragraph(x.replace("{site}", SITE), style="List Number")
     d.add_heading("Source list", 1)
-    d.add_paragraph("Every factual claim links to one of these sources. Under each source are the exact words the report relies on.")
-    for sid in order:
+    d.add_paragraph("Every factual claim cites one of these sources. Under each source are the exact words the report relies on.")
+    for sid in ORDER:
         s = SOURCES[sid]
-        p = d.add_paragraph(); r = p.add_run(f"[{NUM[sid]}] {s['publisher']}: {s['title']}"); r.bold = True
-        d.add_paragraph(s["url"] + (" (in the project repository)" if s.get("local") else ""))
+        p = d.add_paragraph(); r = p.add_run(f"S{NUM[sid]}  {s['publisher']}: {s['title']}"); r.bold = True
+        d.add_paragraph(s["url"] + (" (project repository)" if s.get("local") else ""))
         for f in FACTS.values():
-            if f["source"] == sid and used(f["id"]):
+            if f["source"] == sid and f["id"] in USED:
                 d.add_paragraph("“" + f["quote"] + "”", style="List Bullet")
     d.save(path)
 
 # ---------- Markdown ----------
 def sources_md():
-    L = ["# Source list", "", f"Every factual claim in the report cites one of these sources. Under each source are the exact words the report relies on. "
+    L = ["# Source list", "", "Every factual claim in the report cites one of these sources as S1, S2 and so on. Under each source are the exact words the report relies on. "
          "Text snapshots of every page, with capture time and SHA-256, are in `evidence/` (see `evidence/manifest.json`).", ""]
-    for sid in order:
+    for sid in ORDER:
         s = SOURCES[sid]
-        L.append(f"{NUM[sid]}. **{s['publisher']}**: {s['title']}  ")
-        L.append(f"   {s['url']}" + (" (in this repository)" if s.get("local") else ""))
+        L.append(f"**S{NUM[sid]}. {s['publisher']}**: {s['title']}  ")
+        L.append(f"{s['url']}" + (" (in this repository)" if s.get("local") else ""))
+        L.append("")
         for f in FACTS.values():
-            if f["source"] == sid and used(f["id"]):
-                L.append(f"   - \"{f['quote']}\"")
+            if f["source"] == sid and f["id"] in USED:
+                L.append(f"- \"{f['quote']}\"")
         L.append("")
     return "\n".join(L)
 
@@ -217,36 +511,39 @@ def summary_md():
     L += ["## As an X thread", ""] + [t.replace("{site}", SITE) + "\n" for t in cs["thread"]]
     return "\n".join(L)
 
-def manifest():
-    out = []
-    for p in sorted((ROOT / "evidence").rglob("*.txt")):
-        head = p.read_text(encoding="utf-8", errors="ignore").splitlines()[:1]
-        url = head[0][5:] if head and head[0].startswith("URL: ") else None
-        out.append({"file": str(p.relative_to(ROOT)), "url": url,
-                    "captured_utc": datetime.fromtimestamp(p.stat().st_mtime, timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-                    "sha256": hashlib.sha256(p.read_bytes()).hexdigest()})
-    return out
+def prepare_assets():
+    shutil.copy(ROOT / "scripts/site.css", PUB / "site.css")
+    shutil.copy(ROOT / "scripts/site.js", PUB / "site.js")
+    (PUB / "evidence/tests").mkdir(parents=True, exist_ok=True)
+    for f in (ROOT / "evidence/tests").glob("*.txt"):
+        shutil.copy(f, PUB / "evidence/tests" / f.name)
+    logo = PUB / "brand/dao-logo-on-dark.png"
+    from PIL import Image
+    im = Image.open(logo)
+    if im.height > 200:
+        im = im.convert("RGBA"); w = round(im.width * 176 / im.height)
+        im.resize((w, 176), Image.LANCZOS).save(logo, optimize=True)
 
 def main():
-    pub = ROOT / "public"; (pub / "downloads").mkdir(parents=True, exist_ok=True)
-    (pub / "index.html").write_text(page(False))
-    pr = ROOT / "build"; pr.mkdir(exist_ok=True); (pr / "print.html").write_text(page(True))
+    (PUB / "downloads").mkdir(parents=True, exist_ok=True); (ROOT / "build").mkdir(exist_ok=True)
+    prepare_assets()
+    (PUB / "index.html").write_text(report_page())
+    (PUB / "sources.html").write_text(sources_page())
+    (ROOT / "build/print.html").write_text(print_page())
     from playwright.sync_api import sync_playwright
     with sync_playwright() as p:
         b = p.chromium.launch(); pg = b.new_page()
-        pg.goto((pr / "print.html").as_uri()); pg.wait_for_timeout(300)
-        pg.pdf(path=str(pub / "downloads" / PDF_NAME), format="A4", print_background=True,
-               margin={"top": "16mm", "bottom": "16mm", "left": "15mm", "right": "15mm"},
-               display_header_footer=True, header_template="<span></span>",
-               footer_template="<div style='font-size:8px;width:100%;text-align:center;color:#8fa1ad'><span class='pageNumber'></span> / <span class='totalPages'></span></div>")
+        pg.goto((ROOT / "build/print.html").as_uri()); pg.wait_for_timeout(600)
+        pg.pdf(path=str(PUB / "downloads" / PDF_NAME), format="A4", print_background=True,
+               margin={"top": "14mm", "bottom": "16mm", "left": "14mm", "right": "14mm"}, display_header_footer=True,
+               header_template="<span></span>",
+               footer_template="<div style='font-family:sans-serif;font-size:8px;width:100%;padding:0 14mm;display:flex;justify-content:space-between;color:#8fa1ad'>"
+                               "<span>Could Redbelly connect to Quant Overledger? Feasibility research only.</span><span><span class='pageNumber'></span> / <span class='totalPages'></span></span></div>")
         b.close()
-    build_docx(pub / "downloads" / DOCX_NAME)
-    (ROOT / "SOURCES.md").write_text(sources_md())
-    (ROOT / "COMMUNITY-SUMMARY.md").write_text(summary_md())
-    man = ROOT / "evidence/manifest.json"
-    if not man.exists():
-        man.write_text(json.dumps(manifest(), indent=1))
-    print(f"built: {len(order)} sources cited, {len(USED)} facts used")
+    build_docx(PUB / "downloads" / DOCX_NAME, render_pngs())
+    (ROOT / "SOURCES.md").write_text(sources_md()); shutil.copy(ROOT / "SOURCES.md", PUB / "downloads/SOURCES.md")
+    (ROOT / "COMMUNITY-SUMMARY.md").write_text(summary_md()); shutil.copy(ROOT / "COMMUNITY-SUMMARY.md", PUB / "downloads/COMMUNITY-SUMMARY.md")
+    print(f"built: {len(ORDER)} sources cited, {len(USED)} facts used, {len(FIGNUM)} figures")
 
 if __name__ == "__main__":
     main()

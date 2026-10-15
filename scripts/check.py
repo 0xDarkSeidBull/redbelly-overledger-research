@@ -9,7 +9,9 @@ Checks:
   4  no price talk, investment advice or hype words, no en dash, em dash or emoji
   5  no personal name or handle from the local, git-ignored .credit-names file anywhere in the deliverables
   6  each X post fits in 280 characters
-  7  the PDF, the Word file and the web page contain the current text of every paragraph
+  7  the PDF, the Word file and the web page contain the current text of every paragraph, and the source page every quote
+  8  diagrams follow the SVG rules (brand palette, prefixed ids, title and desc, no styles, images or outside links),
+     and the website loads nothing from another domain
 """
 import hashlib, json, re, subprocess, sys, urllib.request
 from pathlib import Path
@@ -52,7 +54,7 @@ prose.append(("status note", R["status_note"]))
 for k in R["key_findings"]:
     prose += [("finding", k["q"]), ("finding", k["a"] + " {" + k["cite"] + "}")]
 for s in R["sections"]:
-    prose.append((s["id"] + " title", s["title"]))
+    prose.append((s["id"] + " title", re.sub(r"^\d+\.\s*", "", s["title"])))
     if s.get("intro"):
         prose.append((s["id"] + " intro", s["intro"]))
     for i, b in enumerate(s["blocks"]):
@@ -68,6 +70,33 @@ for s in R["sections"]:
                 if not CITE.search(t):
                     errors.append(f"{where}: a {b['label']} statement cites no source: {t[:60]}")
 summary = [("community summary", p) for p in R["community_summary"]["paragraphs"]] + [("X thread", t) for t in R["community_summary"]["thread"]]
+# diagrams: captions are prose with citations; the words drawn inside each SVG go through the same wording rules
+DIAG = json.loads((ROOT / "content/diagrams.json").read_text())
+PALETTE = {"#0c1317", "#141f26", "#17222a", "#1d3140", "#263641", "#223039", "#f1f5f8", "#c2ced6", "#8fa1ad", "#ffb3ae", "#ef5350", "#86efac", "#fcd34d", "#ffffff", "#fff"}
+svg_texts = []
+for d in DIAG:
+    prose.append((f"figure {d['id']} title", d["title"]))
+    prose.append((f"figure {d['id']} caption", d["caption"]))
+    if not CITE.search(d["caption"]):
+        errors.append(f"figure {d['id']}: caption cites no source")
+    for v, tag in (("wide", "w"), ("narrow", "n")):
+        f = ROOT / "public/diagrams" / f"{d['id']}-{v}.svg"
+        if not f.exists():
+            errors.append(f"figure {d['id']}: {f.name} missing"); continue
+        svg = f.read_text()
+        for bad in ("<style", "<image", "<foreignObject", "<script", "class=", "xlink:href=\"http", "href=\"http", "@import"):
+            if bad in svg:
+                errors.append(f"figure {d['id']} {v}: contains {bad}")
+        if f'id="{d["id"]}-{tag}-title"' not in svg or "<desc" not in svg:
+            errors.append(f"figure {d['id']} {v}: needs <title id=\"{d['id']}-{tag}-title\"> and <desc>")
+        for i in re.findall(r'\sid="([^"]+)"', svg):
+            if not i.startswith(f"{d['id']}-{tag}-"):
+                errors.append(f"figure {d['id']} {v}: id '{i}' is not prefixed with {d['id']}-{tag}-")
+        for c in re.findall(r"#[0-9a-fA-F]{3,6}\b", svg):
+            if c.lower() not in PALETTE:
+                errors.append(f"figure {d['id']} {v}: colour {c} is outside the brand palette")
+        words = " ".join(re.sub(r"<[^>]+>", " ", m) for m in re.findall(r"<(?:text|title|desc)\b.*?</(?:text|title|desc)>", svg, re.S))
+        svg_texts.append((f"figure {d['id']} {v} text", __import__("html").unescape(re.sub(r"\s+", " ", words))))
 used = set()
 for where, t in prose:
     for m in CITE.finditer(t):
@@ -85,7 +114,7 @@ if R["key_findings"] and not all(k["label"] in ("confirmed", "analysis", "unknow
     errors.append("key findings: every row needs a status label")
 
 # 3 partnership wording (our own words only; source quotes are checked in 1)
-texts = [(w, CITE.sub("", t)) for w, t in prose + summary]
+texts = [(w, CITE.sub("", t)) for w, t in prose + summary] + svg_texts
 NEG = re.compile(r"\b(no|not|none|nothing|never|without)\b", re.I)
 for w, t in texts:
     for sent in re.split(r"(?<=[.?!])\s+", t):
@@ -138,33 +167,52 @@ for i, t in enumerate(R["community_summary"]["thread"], 1):
     if n > 280:
         errors.append(f"X post {i} is {n} characters, over 280")
 
-# 7 outputs carry the current text
-def plain(t):
-    return norm(CITE.sub("", t))
+# 7 outputs carry the current text: the words before each paragraph's first citation must appear in every output
 pdf = ROOT / "public/downloads/redbelly-overledger-feasibility-report.pdf"
 docx = ROOT / "public/downloads/redbelly-overledger-feasibility-report.docx"
-web = ROOT / "public/index.html"
+web, srcpage = ROOT / "public/index.html", ROOT / "public/sources.html"
+import html as H
+def squash(t):
+    return re.sub(r"[^a-z0-9]", "", norm(t).lower())
 outs = {}
 if pdf.exists():
-    outs["PDF"] = norm(subprocess.run(["pdftotext", "-raw", str(pdf), "-"], capture_output=True, text=True).stdout)
+    outs["PDF"] = squash(subprocess.run(["pdftotext", "-raw", str(pdf), "-"], capture_output=True, text=True).stdout)
 if docx.exists():
     from docx import Document
     d = Document(docx)
-    outs["Word file"] = norm("\n".join([p.text for p in d.paragraphs] + [c.text for t in d.tables for r in t.rows for c in r.cells]))
+    outs["Word file"] = squash("\n".join([p.text for p in d.paragraphs] + [c.text for t in d.tables for r in t.rows for c in r.cells]))
 if web.exists():
-    import html as H
-    outs["web page"] = norm(H.unescape(re.sub(r"<[^>]+>", " ", web.read_text())))
+    outs["web page"] = squash(H.unescape(re.sub(r"<[^>]+>", " ", web.read_text())))
 for name in ("PDF", "Word file", "web page"):
     if name not in outs:
         errors.append(f"{name} missing, run scripts/build.py")
         continue
-    o = re.sub(r"\[\s*\d+(\s*,\s*\d+)*\s*\]", "", outs[name]); o = re.sub(r"\s+", " ", o)
     for where, t in prose + summary:
-        probe = re.sub(r"\s+", " ", plain(t))[:70].strip()
-        probe = probe.replace("{site}", "")
-        if probe and re.sub(r"\s", "", probe) not in re.sub(r"\s", "", o):
-            errors.append(f"{name} is out of date: '{probe[:50]}' ({where}) not found, run scripts/build.py")
+        if where.startswith("figure") and name == "web page" and "title" in where:
+            pass
+        probe = squash(CITE.split(t)[0].replace("{site}", ""))[:60]
+        if len(probe) >= 12 and probe not in outs[name]:
+            errors.append(f"{name} is out of date: '{CITE.split(t)[0][:50]}' ({where}) not found, run scripts/build.py")
             break
+if srcpage.exists():
+    sp = norm(H.unescape(re.sub(r"<[^>]+>", " ", srcpage.read_text())))
+    for fid in used:
+        if fid in F and norm(F[fid]["quote"]) not in sp:
+            errors.append(f"source page is out of date: quote {fid} missing, run scripts/build.py"); break
+else:
+    errors.append("public/sources.html missing, run scripts/build.py")
+
+# 8 the website loads nothing from outside its own domain (links to sources are fine)
+for p in [web, srcpage, ROOT / "public/site.css", ROOT / "public/site.js"]:
+    if not p.exists():
+        continue
+    t = p.read_text()
+    for m in re.finditer(r"<(script|link|img|iframe|source|video|audio)\b[^>]*\b(src|href)=[\"'](https?:)?//", t, re.I):
+        errors.append(f"{p.name}: loads an outside resource ({m.group(0)[:60]})")
+    for m in re.finditer(r"url\(\s*[\"']?(https?:)?//", t):
+        errors.append(f"{p.name}: CSS loads an outside resource")
+    if re.search(r"\u2013|\u2014", t):
+        errors.append(f"{p.name}: contains an en dash or em dash")
 
 # online: every source link answers
 if "--online" in sys.argv:

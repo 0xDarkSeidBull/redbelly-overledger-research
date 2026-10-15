@@ -9,7 +9,8 @@ A feasibility report on whether Redbelly Network could connect to Quant's Overle
 | Deliverable | File |
 |---|---|
 | The report, as PDF and Word | `public/downloads/redbelly-overledger-feasibility-report.pdf`, `public/downloads/redbelly-overledger-feasibility-report.docx` |
-| The report as a web page, with the community summary and source list | `public/index.html` |
+| The report as a web page: key findings, 7 diagrams, the community summary with copy buttons | `public/index.html` |
+| The source list as a web page: every source, the exact words relied on, and where each is used | `public/sources.html` |
 | Short community summary: a few paragraphs and a 6 post X thread | `COMMUNITY-SUMMARY.md` (also in the report and on the site) |
 | Source list, with a link and the exact quoted words for every factual claim | `SOURCES.md` (also at the end of the report and on the site) |
 
@@ -17,8 +18,8 @@ A feasibility report on whether Redbelly Network could connect to Quant's Overle
 
 | Question | Answer | Status |
 |---|---|---|
-| Can Redbelly reach the Overledger Gateway, for reading data and sending signed transactions? | Possibly yes, as a self-serve EVM network, but untested | Analysis |
-| Can Redbelly join the Fusion Rollup (deposits, unified balances, cross-chain messages)? | Not possible yet | Confirmed |
+| Could the Overledger Gateway reach Redbelly, for reading data and sending signed transactions? | Possibly, but unconfirmed: Redbelly fits the technical self-serve tests, but Overledger describes self-serve as for public permissionless networks, and writing to Redbelly needs a credential. Untested | Analysis |
+| Can Redbelly join the Fusion Rollup (deposits, unified balances, cross-chain messages)? | Not possible yet, as far as public sources show | Analysis |
 | Do Receptor credentials and Tokeniser rules travel with an asset to another chain? | No, not by themselves | Analysis |
 | Is there any agreement between Redbelly and Quant? | None announced | Confirmed |
 
@@ -36,12 +37,16 @@ Every paragraph carries one label:
 | Path | What it holds |
 |---|---|
 | `content/report.json` | Every word of the report and the community summary. Claims cite facts as `{fact-id}` |
-| `content/facts.json` | 82 facts, each with its source and the exact words quoted from it |
+| `content/facts.json` | 97 facts, each with its source and the exact words quoted from it |
 | `content/sources.json` | 38 sources: publisher, title, link and snapshot file |
+| `content/diagrams.json` | The 7 diagrams: title, caption with citations, and the exact wording each one may show |
+| `public/diagrams/` | The diagrams as hand-written SVG, a wide version for desktop and print and a narrow one for phones |
 | `evidence/snapshots/` | A text snapshot of every source page as it read on 15 October 2026 |
 | `evidence/tests/` | Output of our own JSON-RPC calls to Redbelly and of the calls to the public Overledger API |
 | `evidence/manifest.json` | Address, capture time (UTC) and SHA-256 of every evidence file |
-| `scripts/build.py` | Builds the web page, PDF, Word file, `SOURCES.md` and `COMMUNITY-SUMMARY.md` |
+| `scripts/build.py` | Builds both web pages, the PDF, the Word file, `SOURCES.md` and `COMMUNITY-SUMMARY.md` |
+| `scripts/site.css`, `scripts/site.js`, `scripts/print.css` | Website style and behaviour, and the print style used for the PDF |
+| `scripts/render_diagram.py` | Renders one diagram to PNG and measures it: smallest text size, overlapping text, text outside its box |
 | `scripts/check.py` | The quality gate, below |
 | `scripts/snap_sources.py` | Recaptures every source page and rewrites the manifest |
 
@@ -60,7 +65,9 @@ python3 scripts/check.py --online   # also confirms every source link answers to
 - the text uses investment language or hype words, an en dash, an em dash or an emoji
 - any deliverable contains a personal name or handle listed in a local, git-ignored `.credit-names` file
 - an X post is over 280 characters
-- the PDF, the Word file or the web page does not contain the current text of every paragraph
+- the PDF, the Word file or the web page does not contain the current text of every paragraph, or the source page misses a quote
+- a diagram breaks the SVG rules (brand palette only, prefixed ids, title and description, no styles, images or outside links), or its words break the wording rules above
+- the website loads anything from another domain
 
 To repeat the RPC test, run `eth_chainId` and `net_version` against `https://governors.mainnet.redbelly.network` (see `evidence/tests/rpc-check.txt`).
 
@@ -73,6 +80,12 @@ python3 scripts/check.py
 ```
 
 Playwright needs Chromium. `pdftotext` (poppler) is used by the check.
+
+## The website
+
+- **Report** (`index.html`): key findings first, then ten sections with a sticky, animated "On this page" menu, seven diagrams (each can open full screen), and the community summary with a copy button for the paragraphs, each X post and the whole thread.
+- **Sources** (`sources.html`): every source in groups, with the exact quoted words, where each is used in the report, and a filter. A citation such as S5 in the report opens the source list at S5 and marks it with a red box. Hovering a citation shows the quoted words first.
+- A red button at the bottom left switches between the two pages, and a button at the bottom right goes back to the top.
 
 ## Deploy
 
@@ -90,4 +103,5 @@ To update: `cd /var/www/redbelly-overledger-research && git pull`.
 
 - Fonts: Be Vietnam Pro and JetBrains Mono, SIL Open Font License 1.1 (`licenses/`), self-hosted from `public/fonts/`.
 - Snapshots in `evidence/` are verbatim copies of third-party pages, kept only so every quote can be checked. They keep the source's own punctuation and names.
-- No third-party images, icons or logos are used.
+- Logo: the official Redbelly DAO logo on dark, from the Task Board brand kit (taskboard.redbellydao.network/brand), used in the site header.
+- Diagrams and icons are drawn for this report in SVG. No third-party images or icons are used.

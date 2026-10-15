@@ -408,5 +408,80 @@
   "id": "tk-runs",
   "source": "tk-tech",
   "quote": "Underneath it runs Redbelly Network"
+ },
+ {
+  "id": "flow-what",
+  "source": "ol-start",
+  "quote": "Flow Applications turn multi-step business logic (signing, smart-contract deployment, compliance check, payment"
+ },
+ {
+  "id": "con-selfserve-scope",
+  "source": "ol-connectors",
+  "quote": "Self-serve Connectors for public, permissionless DLT families."
+ },
+ {
+  "id": "con-permissionless",
+  "source": "ol-connectors",
+  "quote": "For networks where it does not matter which node a client connects to, i.e. public permissionless networks"
+ },
+ {
+  "id": "ol-permissioned",
+  "source": "ol-overview",
+  "quote": "A network with controlled write access; \"public permissioned\" means anyone can read but only allowlisted parties can write."
+ },
+ {
+  "id": "con-besu",
+  "source": "ol-connectors",
+  "quote": "Hyperledger Besu (permissioned) Permissioned EVM Used in regulated EVM deployments."
+ },
+ {
+  "id": "con-live-list",
+  "source": "ol-connectors",
+  "quote": "Run GET /networks to retrieve the live list."
+ },
+ {
+  "id": "t-ol-auth-all",
+  "source": "test-ol",
+  "quote": "GET https://fusion-rollup.quant.dev/networks -> HTTP 401 {\"status\":401,\"error\":\"Missing authorization header.\""
+ },
+ {
+  "id": "con-one-call",
+  "source": "ol-connectors",
+  "quote": "Overledger lets you register a managed-provider node URL via a single API call. The network then becomes immediately reachable through the Overledger Gateway."
+ },
+ {
+  "id": "con-node-public-shared",
+  "source": "ol-connectors",
+  "quote": "Any tenant with access to the network, the node joins the shared load-balancing pool for that network."
+ },
+ {
+  "id": "con-node-private-scope",
+  "source": "ol-connectors",
+  "quote": "the node is scoped to your user identity"
+ },
+ {
+  "id": "ol-subset",
+  "source": "ol-overview",
+  "quote": "The Rollup connects to a subset of these networks."
+ },
+ {
+  "id": "fw-every",
+  "source": "ol-overview",
+  "quote": "It applies to every public or permissioned DLT network that the Gateway reaches"
+ },
+ {
+  "id": "ol-no-rpc",
+  "source": "ol-start",
+  "quote": "You don't manage RPC providers, node failover, or chain-specific clients."
+ },
+ {
+  "id": "sd-bbs",
+  "source": "rb-sd",
+  "quote": "Selective Disclosure involves using credentials that implement BBS+ signatures."
+ },
+ {
+  "id": "rb-business-optional",
+  "source": "vine-identity",
+  "quote": "business verification is also available on the network"
  }
 ]
