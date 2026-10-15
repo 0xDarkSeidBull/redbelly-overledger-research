@@ -22,7 +22,7 @@
 <text x="68" y="304" font-family="Be Vietnam Pro, sans-serif" font-size="15" font-weight="500" fill="#f1f5f8">identity state published on Redbelly</text>
 <rect x="64" y="326" width="312" height="104" rx="6" fill="#1d3140" stroke="#EF5350" stroke-width="2"/>
 <rect x="78" y="340" width="117.8" height="24" rx="12" fill="none" stroke="#FCD34D" stroke-width="1.5"/>
-<g transform="translate(88 345.5) scale(0.541667)" fill="none" stroke="#FCD34D" stroke-width="3.69" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19l5-6 4 3 7-9"/></g>
+<circle cx="94.5" cy="352.0" r="3.4" fill="#FCD34D"/>
 <text x="108" y="357.0" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" letter-spacing="1.2" fill="#FCD34D">ANALYSIS</text>
 <text font-family="Be Vietnam Pro, sans-serif" fill="#f1f5f8"><tspan x="78" y="390" font-size="15" font-weight="700" fill="#ffb3ae">Another chain:</tspan><tspan x="78" dy="21" font-size="14" font-weight="400" fill="#c2ced6">only if the setup is rebuilt there</tspan></text>
 <rect x="52" y="464" width="336" height="328" rx="6" fill="#17222a" stroke="#263641" stroke-width="1.5"/>
@@ -38,7 +38,7 @@
 <text x="68" y="654" font-family="Be Vietnam Pro, sans-serif" font-size="15" font-weight="500" fill="#f1f5f8">the issuer&apos;s BBS+ signature</text>
 <rect x="64" y="676" width="312" height="104" rx="6" fill="#141f26" stroke="#FCD34D" stroke-width="1.5"/>
 <rect x="78" y="690" width="117.8" height="24" rx="12" fill="none" stroke="#FCD34D" stroke-width="1.5"/>
-<g transform="translate(88 695.5) scale(0.541667)" fill="none" stroke="#FCD34D" stroke-width="3.69" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19l5-6 4 3 7-9"/></g>
+<circle cx="94.5" cy="702.0" r="3.4" fill="#FCD34D"/>
 <text x="108" y="707.0" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" letter-spacing="1.2" fill="#FCD34D">ANALYSIS</text>
 <text font-family="Be Vietnam Pro, sans-serif" fill="#f1f5f8"><tspan x="78" y="740" font-size="14" font-weight="600" fill="#f1f5f8">Could be checked anywhere in principle,</tspan><tspan x="78" dy="21" font-size="14" font-weight="400" fill="#c2ced6">no such Overledger app foundday</tspan></text>
 <circle cx="26" cy="88" r="3" fill="#8fa1ad"/>

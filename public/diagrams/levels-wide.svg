@@ -7,7 +7,7 @@
 <text x="82" y="70" font-family="Be Vietnam Pro, sans-serif" font-size="20" font-weight="700" fill="#f1f5f8">Gateway access</text>
 <text font-family="Be Vietnam Pro, sans-serif" font-size="15" font-weight="400" fill="#c2ced6"><tspan x="38" y="104">read data, send self-signed</tspan><tspan x="38" dy="21">transactions</tspan></text>
 <rect x="38" y="145" width="224.6" height="26" rx="13" fill="none" stroke="#FCD34D" stroke-width="1.5"/>
-<g transform="translate(49 151.4) scale(0.55)" fill="none" stroke="#FCD34D" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v4.5l3 2"/></g>
+<circle cx="55.6" cy="158.0" r="3.4" fill="#FCD34D"/>
 <text x="69.2" y="163.4" font-family="JetBrains Mono, monospace" font-size="15" font-weight="500" fill="#FCD34D" letter-spacing="1.2">POSSIBLY, UNTESTED</text>
 <rect x="280" y="30" width="642" height="236" rx="6" fill="#17222a" stroke="#263641" stroke-width="1.5"/>
 <line x1="557" y1="48" x2="557" y2="248" stroke="#263641" stroke-width="1.5"/>
@@ -38,7 +38,7 @@
 <text x="82" y="330" font-family="Be Vietnam Pro, sans-serif" font-size="20" font-weight="700" fill="#f1f5f8">Flow Apps</text>
 <text font-family="Be Vietnam Pro, sans-serif" font-size="15" font-weight="400" fill="#c2ced6"><tspan x="38" y="364">Quant workflows</tspan><tspan x="38" dy="21">such as signing</tspan></text>
 <rect x="38" y="405" width="112.4" height="26" rx="13" fill="none" stroke="#EF5350" stroke-width="1.5"/>
-<g transform="translate(49 411.4) scale(0.55)" fill="none" stroke="#ffb3ae" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17.2v.1"/></g>
+<circle cx="55.6" cy="418.0" r="3.4" fill="#ffb3ae"/>
 <text x="69.2" y="423.4" font-family="JetBrains Mono, monospace" font-size="15" font-weight="500" fill="#ffb3ae" letter-spacing="1.2">UNKNOWN</text>
 <rect x="280" y="290" width="642" height="151" rx="6" fill="#17222a" stroke="#263641" stroke-width="1.5"/>
 <text x="300" y="322" font-family="JetBrains Mono, monospace" font-size="15" font-weight="500" fill="#8fa1ad" letter-spacing="1.5">OPEN</text>
@@ -53,7 +53,7 @@
 <text x="82" y="539" font-family="Be Vietnam Pro, sans-serif" font-size="20" font-weight="700" fill="#f1f5f8">Fusion Rollup</text>
 <text font-family="Be Vietnam Pro, sans-serif" font-size="15" font-weight="400" fill="#c2ced6"><tspan x="38" y="573">deposits, unified balances,</tspan><tspan x="38" dy="21">cross-chain messages</tspan></text>
 <rect x="38" y="614" width="204.2" height="26" rx="13" fill="#EF5350" stroke="#EF5350" stroke-width="1.5"/>
-<g transform="translate(49 620.4) scale(0.55)" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></g>
+<circle cx="55.6" cy="627.0" r="3.4" fill="#ffffff"/>
 <text x="69.2" y="632.4" font-family="JetBrains Mono, monospace" font-size="15" font-weight="500" fill="#ffffff" letter-spacing="1.2">NOT POSSIBLE YET</text>
 <rect x="280" y="499" width="642" height="223" rx="6" fill="#17222a" stroke="#263641" stroke-width="1.5"/>
 <line x1="557" y1="517" x2="557" y2="704" stroke="#263641" stroke-width="1.5"/>

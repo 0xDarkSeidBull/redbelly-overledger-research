@@ -59,7 +59,7 @@
 <rect x="24" y="809.5" width="18" height="4" rx="2" fill="#EF5350"/>
 <text x="50" y="817" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" letter-spacing="1.5" fill="#8fa1ad">BREAK POINTS</text>
 <rect x="184" y="799.5" width="118" height="26" rx="13" fill="none" stroke="#FCD34D" stroke-width="1.5"/>
-<g transform="translate(195 805.9) scale(0.55)" fill="none" stroke="#FCD34D" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19l5-6 4 3 7-9"/></g>
+<circle cx="201.6" cy="812.5" r="3.4" fill="#FCD34D"/>
 <text x="214" y="817" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" letter-spacing="1.2" fill="#FCD34D">ANALYSIS</text>
 <circle cx="36" cy="859.0" r="11" fill="#EF5350"/>
 <text x="36" y="863.9" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#ffffff">1</text>

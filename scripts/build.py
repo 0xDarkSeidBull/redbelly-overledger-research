@@ -60,6 +60,8 @@ ICON = {
  "up": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>',
  "copy": '<svg class="ic-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></svg><svg class="ic-done" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
  "expand": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>',
+ "home": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7M6 9.5V20h12V9.5"/></svg>',
+ "chev": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>',
  "close": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
  "search": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
  "repo": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14z"/><path d="M8 7h8"/></svg>',
@@ -313,9 +315,35 @@ def foot():
             '<div><p>Fonts: Be Vietnam Pro and JetBrains Mono, SIL Open Font License 1.1. Logo: Redbelly DAO, from the Task Board brand kit.</p>'
             '<p>Diagrams drawn for this report. No third-party images or icons.</p></div></footer>')
 
-def floats(switch_href, switch_label, direction):
-    return (f'<a class="page-switch" href="{switch_href}" aria-label="{switch_label}">{ICON[direction]}<span class="tip">{switch_label}</span></a>'
-            f'<button class="to-top" type="button" aria-label="Back to top">{ICON["up"]}</button>'
+def report_nav():
+    """Side menu of the report: two entries, Key findings and Chapters, with the chapters as a sub list."""
+    ch = chapters()
+    subs = "".join(f'<li><a href="#{cid}" data-t="{cid}"><span class="n">{nn(i)}</span><span>{esc(t)}</span></a></li>' for i, (cid, t, _) in enumerate(ch, 1))
+    return (f'<aside class="toc rnav" aria-label="Report contents"><p class="toc-head">Report</p><ol class="rn">'
+            f'<li><a class="rn-item" href="#findings" data-t="findings"><span class="rn-l">A</span><span class="rn-t">Key findings</span></a></li>'
+            f'<li class="rn-group open"><div class="rn-row"><a class="rn-item" href="#chapters" data-t="chapters"><span class="rn-l">B</span><span class="rn-t">Chapters</span>'
+            f'<span class="cnt">{len(ch)}</span></a><button class="rn-tog" type="button" aria-expanded="true" aria-controls="rn-sub" aria-label="Show or hide the chapters">{ICON["chev"]}</button></div>'
+            f'<ol class="rn-sub" id="rn-sub">{subs}</ol></li></ol>'
+            f'<div class="toc-links"><a href="downloads/{PDF_NAME}">{ICON["pdf"]}Download PDF</a><a href="downloads/{DOCX_NAME}">{ICON["doc"]}Word file</a><a href="sources.html">{ICON["list"]}Source list</a></div></aside>')
+
+def dock_report():
+    ch = chapters()
+    sheet = "".join(f'<li><a href="#{cid}"><span class="n">{nn(i)}</span>{esc(t)}</a></li>' for i, (cid, t, _) in enumerate(ch, 1))
+    return ('<nav class="dock" aria-label="Quick navigation">'
+            f'<a class="dk dk-home" href="#findings">{ICON["home"]}<span class="dl">Findings</span></a>'
+            f'<button class="dk dk-chap" type="button" aria-expanded="false" aria-controls="sheet">{ICON["list"]}<span class="dl">Chapters</span></button>'
+            f'<span class="dk-mid" hidden><a class="dk dk-prev" href="#findings" aria-label="Previous chapter">{ICON["left"]}</a><span class="dk-pos"></span>'
+            f'<a class="dk dk-next" href="#findings" aria-label="Next chapter">{ICON["right"]}</a></span>'
+            f'<span class="dk-sep" aria-hidden="true"></span><a class="dk dk-src" href="sources.html">{ICON["repo"]}<span class="dl">Sources</span></a>'
+            f'<button class="dk dk-top" type="button" aria-label="Back to top">{ICON["up"]}</button></nav>'
+            f'<div class="sheet" id="sheet" hidden><p class="sh-head">Chapters</p><ol>{sheet}</ol></div>'
+            '<div class="toast" role="status" aria-live="polite"></div>')
+
+def dock_sources():
+    return ('<nav class="dock" aria-label="Quick navigation">'
+            f'<a class="dk" href="index.html">{ICON["left"]}<span class="dl">Back to the report</span></a><span class="dk-sep" aria-hidden="true"></span>'
+            f'<a class="dk" href="#main">{ICON["search"]}<span class="dl">Filter</span></a>'
+            f'<button class="dk dk-top" type="button" aria-label="Back to top">{ICON["up"]}</button></nav>'
             '<div class="toast" role="status" aria-live="polite"></div>')
 
 HERO_ART = ('<svg class="hero-art" viewBox="0 0 300 220" aria-hidden="true" focusable="false">'
@@ -331,10 +359,8 @@ def cite_data():
                        "facts": {f: FACTS[f]["quote"] for f in sorted(USED)}}, ensure_ascii=False).replace("</", "<\\/")
 
 def report_page():
-    items = [("findings", "00", "Key findings")] + [(s["id"], nn(SEC_NUM[s["id"]]), s["short"]) for s in R["sections"]] + [("summary", nn(len(R["sections"]) + 1), "Community summary")]
     bodies = {s["id"]: section_html(s, "web") for s in R["sections"]}
     bodies["summary"] = summary_html("web")
-    toc, chips = toc_html(items, f'<a href="downloads/{PDF_NAME}">{ICON["pdf"]}Download PDF</a><a href="sources.html">{ICON["list"]}Source list</a>')
     nsrc, nfacts = len(ORDER), len(USED)
     hero = (f'<section class="hero" aria-labelledby="title">{HERO_ART}<p class="kicker"><span class="bar"></span>Redbelly DAO community research</p>'
             f'<h1 id="title">{esc(R["title"])}</h1><p class="lead">{esc(R["subtitle"])}. What Overledger is, whether Redbelly can reach it, what that would take, and where compliance could break.</p>'
@@ -348,9 +374,9 @@ def report_page():
     body = (findings_html("web") + legend + chapters_html(bodies) +
             "".join(bodies[s["id"]] for s in R["sections"]) + bodies["summary"])
     return (head(R["title"] + " | Redbelly DAO research", R["subtitle"]) + "<body>" + header("report") +
-            f'<main id="main">{hero}<div class="layout">{toc}<div class="content">{chips}{body}{foot()}</div></div></main>' +
+            f'<main id="main">{hero}<div class="layout">{report_nav()}<div class="content">{body}{foot()}</div></div></main>' +
             '<div class="viewer" aria-hidden="true" role="dialog" aria-label="Figure, full screen"><button class="close" type="button" aria-label="Close">' + ICON["close"] + '</button><div class="vin"></div></div>' +
-            floats("sources.html", "Source list", "right") + f'<script type="application/json" id="cite-data">{cite_data()}</script><script src="site.js{CSS_V}"></script></body></html>')
+            dock_report() + f'<script type="application/json" id="cite-data">{cite_data()}</script><script src="site.js{CSS_V}"></script></body></html>')
 
 def snapshot_info(s):
     import hashlib
@@ -398,7 +424,7 @@ def sources_page():
         body += "</section>"
     return (head("Source list | " + R["title"], "Every source behind the Overledger and Redbelly feasibility report, with the exact words relied on.") +
             "<body>" + header("sources") + f'<main id="main">{hero}<div class="layout">{toc}<div class="content">{chips}{body}{foot()}</div></div></main>' +
-            floats("index.html", "Back to the report", "left") + f'<script src="site.js{CSS_V}"></script></body></html>')
+            dock_sources() + f'<script src="site.js{CSS_V}"></script></body></html>')
 
 # ---------- print version for the PDF ----------
 def drop_small_screen_rules(css):

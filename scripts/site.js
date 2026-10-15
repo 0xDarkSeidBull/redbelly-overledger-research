@@ -7,7 +7,7 @@
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
 
   // ---------- reading progress and back to top ----------
-  var bar = $(".progress span"), toTop = $(".to-top");
+  var bar = $(".progress span"), toTop = $(".dk-top");
   function onScroll() {
     var h = document.documentElement.scrollHeight - window.innerHeight;
     var p = h > 0 ? Math.min(1, window.scrollY / h) : 0;
@@ -67,12 +67,13 @@
     if (!targets.length) return;
     var idx;
     if (chapterMode) {
-      idx = view === "home" ? 0 : ids.indexOf(view);
-      if (fill) {
-        var h = document.documentElement.scrollHeight - window.innerHeight;
-        var p = h > 0 ? Math.min(1, window.scrollY / h) : 1;
-        fill.style.transform = "scaleY(" + Math.max(0, Math.min(1, (idx + p) / ids.length)) + ")";
+      var key = view;
+      if (view === "home") {
+        var cs = document.getElementById("chapters");
+        key = cs && cs.getBoundingClientRect().top <= window.innerHeight * 0.4 ? "chapters" : "findings";
       }
+      idx = ids.indexOf(key);
+      syncChrome(key);
     } else {
       var line = window.innerHeight * 0.32; idx = 0;
       targets.forEach(function (t, i) { if (t && t.getBoundingClientRect().top <= line) idx = i; });
@@ -117,6 +118,43 @@
       });
     }
   }
+  // ---------- menu sub list and the bottom dock ----------
+  var group = $(".rn-group"), tog = $(".rn-tog"), userOpen = null;
+  var dock = $(".dock"), sheet = $("#sheet"), chapBtn = $(".dk-chap"), mid = $(".dk-mid"), home = $(".dk-home");
+  function setOpen(open) {
+    if (!group) return;
+    group.classList.toggle("open", open);
+    if (tog) tog.setAttribute("aria-expanded", String(open));
+  }
+  function syncChrome(key) {
+    // The chapter list stays open while a chapter or the chapter grid is in view, unless the reader closed it.
+    setOpen(userOpen !== null ? userOpen : key !== "findings");
+    var ci = chapIds.indexOf(view);
+    if (mid) mid.hidden = ci === -1;
+    if (home) { home.hidden = ci !== -1; home.classList.toggle("on", key === "findings"); }
+    if (ci !== -1) {
+      $(".dk-pos").textContent = (ci + 1) + " / " + chapIds.length;
+      $(".dk-prev").setAttribute("href", "#" + (ci > 0 ? chapIds[ci - 1] : "chapters"));
+      var nx = $(".dk-next");
+      if (ci + 1 < chapIds.length) { nx.setAttribute("href", "#" + chapIds[ci + 1]); nx.setAttribute("aria-label", "Next chapter"); }
+      else { nx.setAttribute("href", "sources.html"); nx.setAttribute("aria-label", "Source list"); }
+    }
+    if (sheet) $$("a", sheet).forEach(function (a) { a.classList.toggle("active", a.getAttribute("href") === "#" + view); });
+  }
+  if (tog) tog.addEventListener("click", function () { userOpen = !group.classList.contains("open"); setOpen(userOpen); });
+  function closeSheet() { if (sheet && !sheet.hidden) { sheet.hidden = true; chapBtn.setAttribute("aria-expanded", "false"); } }
+  if (chapBtn && sheet) {
+    chapBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var open = sheet.hidden;
+      sheet.hidden = !open; chapBtn.setAttribute("aria-expanded", String(open));
+      if (open) { var a = $("a.active", sheet) || $("a", sheet); if (a) a.focus({ preventScroll: true }); }
+    });
+    $$("a", sheet).forEach(function (a) { a.addEventListener("click", closeSheet); });
+    document.addEventListener("click", function (e) { if (!sheet.contains(e.target) && e.target !== chapBtn) closeSheet(); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !sheet.hidden) { closeSheet(); chapBtn.focus(); } });
+  }
+
   if (chapterMode) {
     if ("scrollRestoration" in history) history.scrollRestoration = "manual";
     window.addEventListener("hashchange", function () { route(false); });
