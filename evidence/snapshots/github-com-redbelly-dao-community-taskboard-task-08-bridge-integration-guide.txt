@@ -1,5 +1,6 @@
 URL: https://github.com/Redbelly-DAO-Community-Taskboard/TASK-08-bridge-integration-guide
 TITLE: GitHub - Redbelly-DAO-Community-Taskboard/TASK-08-bridge-integration-guide: Selected Task Board deliverable: Existing Bridge Integration Guide. · GitHub
+NOTE: two personal names in this copy were replaced with [name removed], because the Task Board does not allow personal credit inside a deliverable. Nothing else was changed.
 
 Skip to content
 Navigation Menu
@@ -280,7 +281,7 @@ Networks: Ethereum Sepolia (source) · Redbelly Testnet, Chain ID 153 (destinati
 Prerequisites: Node.js ≥ 18 · Sepolia ETH (faucet) · Redbelly Testnet RBNT for relayer gas · an RPC provider whose free tier supports eth_getLogs (see Troubleshooting)
 
 # Clone & install
-git clone https://github.com/0xDarkSeidBull/daotask8.git
+git clone https://github.com/[name removed]/daotask8.git
 cd daotask8
 npm install
 
@@ -526,7 +527,7 @@ This repo's bridge demonstrates the minimal architecture needed for a Redbelly i
  Mainnet deployment, potentially on LayerZero DVN/Executor infrastructure
 👨‍💻 Built By
 
-0xDarkSeidBull solo builder, Redbelly ecosystem contributor.
+[name removed] solo builder, Redbelly ecosystem contributor.
 
 📄 License
 

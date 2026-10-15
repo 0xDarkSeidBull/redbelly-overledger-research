@@ -102,6 +102,6 @@ To update: `cd /var/www/redbelly-overledger-research && git pull`.
 ## Licences
 
 - Fonts: Be Vietnam Pro and JetBrains Mono, SIL Open Font License 1.1 (`licenses/`), self-hosted from `public/fonts/`.
-- Snapshots in `evidence/` are verbatim copies of third-party pages, kept only so every quote can be checked. They keep the source's own punctuation and names.
+- Snapshots in `evidence/` are verbatim copies of third-party pages, kept only so every quote can be checked. They keep the source's own punctuation. One exception: in the TASK-08 guide copy, two personal names were replaced with [name removed], because the Task Board does not allow personal credit inside a deliverable; the file header and `evidence/manifest.json` say so.
 - Logo: the official Redbelly DAO logo on dark, from the Task Board brand kit (taskboard.redbellydao.network/brand), used in the site header.
 - Diagrams and icons are drawn for this report in SVG. No third-party images or icons are used.

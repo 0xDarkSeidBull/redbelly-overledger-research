@@ -140,7 +140,7 @@ for w, t in texts + [("fact " + f["id"], f["quote"]) for f in FACTS]:
 
 # 5 personal credit
 cn = ROOT / ".credit-names"
-deliverables = [p for p in ROOT.rglob("*") if p.is_file() and not any(x in p.parts for x in (".git", "evidence", "build", "__pycache__")) and p.name != ".credit-names"]
+deliverables = [p for p in ROOT.rglob("*") if p.is_file() and not any(x in p.parts for x in (".git", "build", "__pycache__")) and p.name != ".credit-names"]
 if cn.exists():
     names = [n.strip().lower() for n in cn.read_text().splitlines() if n.strip()]
     for p in deliverables:
