@@ -319,15 +319,31 @@ sup.cite a:hover, sup.cite a:focus-visible { background: var(--brand); color: #f
 .chap-card .cm { margin-top: auto; padding-top: 8px; display: flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--text-2); }
 .chap-card .cm svg { width: 15px; height: 15px; transition: transform 250ms var(--ease); }
 .chap-card:hover .cm svg { transform: translateX(3px); }
-.chap-top, .chap-nav { display: none; }
-.js .chap-top { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 0 0 22px; padding: 0 0 14px; border-bottom: 1px solid var(--hairline); }
+.chap-top { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 0 0 22px; padding: 0 0 14px; border-bottom: 1px solid var(--hairline); }
 .chap-all { display: inline-flex; align-items: center; gap: 6px; color: var(--text-2); text-decoration: none; font-size: 14px; font-weight: 600; }
 .chap-all:hover { color: var(--text); }
 .chap-all svg { width: 15px; height: 15px; }
-.chap-of { font: 500 13px var(--mono); color: var(--accent-text); margin-left: auto; }
+.chap-of { font: 500 13px var(--mono); color: var(--accent-text); margin-left: auto; white-space: nowrap; }
+.chap-of b { font-weight: 500; }
 .chap-meter { flex: 0 0 140px; height: 4px; border-radius: 999px; background: var(--container); overflow: hidden; }
 .chap-meter span { display: block; height: 100%; background: var(--brand); border-radius: 999px; }
-.js .chap-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 36px 0 8px; }
+/* chapter slider: drag or tap to open any chapter; replaces the plain bar when JavaScript runs */
+.chap-slide { display: none; position: relative; flex: 0 0 240px; height: 28px; --p: 0%; }
+.js .chap-slide { display: block; }
+.js .chap-meter { display: none; }
+.chap-ticks { position: absolute; left: 8px; right: 8px; top: 50%; height: 4px; margin-top: -2px; border-radius: 9999px;
+  background: linear-gradient(to right, var(--brand) 0 var(--p), var(--container) var(--p) 100%); pointer-events: none; }
+.chap-ticks span { position: absolute; top: 50%; width: 4px; height: 4px; margin: -2px 0 0 -2px; border-radius: 9999px; background: var(--muted); opacity: 0.7; }
+.chap-range { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; background: transparent; cursor: pointer; -webkit-appearance: none; appearance: none; touch-action: pan-y; }
+.chap-range::-webkit-slider-runnable-track { height: 28px; background: transparent; }
+.chap-range::-moz-range-track { height: 28px; background: transparent; }
+.chap-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; margin-top: 6px; border-radius: 9999px; background: var(--brand); border: 2px solid var(--base); transition: transform 150ms var(--ease); }
+.chap-range::-moz-range-thumb { width: 16px; height: 16px; border-radius: 9999px; background: var(--brand); border: 2px solid var(--base); }
+.chap-range:hover::-webkit-slider-thumb, .chap-range:active::-webkit-slider-thumb { transform: scale(1.2); }
+.chap-range:focus { outline: none; }
+.chap-range:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 4px; }
+.chap-tip { flex-basis: 100%; order: 4; margin: -4px 0 0; font: 500 13px/1.4 var(--mono); color: var(--accent-text); text-align: right; }
+.chap-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 36px 0 8px; }
 .chap-nav a { display: flex; flex-direction: column; gap: 6px; padding: 16px 18px; border: 1px solid var(--edge); border-radius: 8px; background: var(--slate); color: var(--text); text-decoration: none; transition: border-color 250ms var(--ease), background-color 250ms var(--ease); }
 .chap-nav a:hover, .chap-nav a:focus-visible { border-color: var(--brand); background: var(--container); }
 .chap-nav .dir { display: inline-flex; align-items: center; gap: 6px; font: 500 12px var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
@@ -337,9 +353,9 @@ sup.cite a:hover, sup.cite a:focus-visible { background: var(--brand); color: #f
 .chap-nav .chap-next { grid-column: 2; }
 @media (prefers-reduced-motion: reduce) { .chap-card, .chap-card .cm svg { transition: none; } }
 @media (max-width: 640px) {
-  .chap-meter { flex-basis: 100%; order: 3; }
+  .chap-meter, .chap-slide { flex-basis: 100%; order: 3; }
   .chap-of { margin-left: auto; }
-  .js .chap-nav { grid-template-columns: 1fr; }
+  .chap-nav { grid-template-columns: 1fr; }
   .chap-nav .chap-next { grid-column: 1; }
 }
 

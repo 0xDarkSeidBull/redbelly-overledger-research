@@ -57,12 +57,12 @@
      "text": "Neither announcement names any blockchain the network will use or connect to, and neither mentions Redbelly. No public source we found says whether it will connect to Redbelly or to any other specific chain {tch-date}."
     }
    ],
-   "short": "Why now",
+   "short": "Why now?",
    "kicker": "Context"
   },
   {
    "id": "overledger",
-   "title": "2. What Overledger is",
+   "title": "2. What is Overledger?",
    "blocks": [
     {
      "label": "confirmed",
@@ -77,7 +77,7 @@
      "text": "Multi-step workflows such as signing or deploying a contract run as Flow Apps {flow-what}. Signing can be done with the user's own keys {flow-own-keys}, and the client never sees private key material {flow-byo}."
     }
    ],
-   "short": "What Overledger is",
+   "short": "What is Overledger?",
    "kicker": "Overledger"
   },
   {

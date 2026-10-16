@@ -70,6 +70,29 @@
     document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !sheet.hidden) { closeSheet(); chapBtn.focus(); } });
   }
 
+  // ---------- chapter slider: drag or tap the bar under the header to open any chapter ----------
+  $$(".chap-range").forEach(function (r) {
+    var urls = r.getAttribute("data-urls").split("|"), titles = r.getAttribute("data-titles").split("|");
+    var here = parseInt(r.value, 10), n = urls.length, slide = r.parentNode;
+    var top = slide.parentNode, of = $(".chap-of b", top), tip = $(".chap-tip", top);
+    function show(v) {
+      slide.style.setProperty("--p", ((v - 1) / (n - 1) * 100) + "%");
+      if (of) of.textContent = v;
+      r.setAttribute("aria-valuetext", "Chapter " + v + " of " + n + ": " + titles[v - 1]);
+      if (tip) {
+        tip.hidden = v === here;
+        tip.textContent = v === here ? "" : "Release to open " + v + ". " + titles[v - 1];
+      }
+    }
+    r.addEventListener("input", function () { show(parseInt(r.value, 10)); });
+    r.addEventListener("change", function () {
+      var v = parseInt(r.value, 10);
+      if (v !== here) window.location.href = urls[v - 1];
+    });
+    // Coming back with the browser's back button can restore a moved slider; put it back on this chapter.
+    window.addEventListener("pageshow", function () { r.value = here; show(here); });
+  });
+
   // ---------- chapter pages: the left and right arrow keys open the previous and next chapter ----------
   var prevLink = $('link[rel="prev"]'), nextLink = $('link[rel="next"]');
   if (prevLink || nextLink) {

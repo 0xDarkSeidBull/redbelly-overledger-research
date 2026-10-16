@@ -226,10 +226,19 @@ def chapter_url(cid):
     return f"/chapters/{CH_SLUG[cid]}"
 
 def chapter_top(cid):
-    i = CH_IDS.index(cid) + 1
+    """Bar above each chapter: back to all chapters, "Chapter 3 of 11", and a slider that opens any chapter.
+    Without JavaScript the slider is hidden and a plain progress bar shows the position."""
+    i = CH_IDS.index(cid) + 1; n = len(CHAPTERS)
+    urls = "|".join(chapter_url(c) for c in CH_IDS)
+    titles = "|".join(esc(CH_TITLE[c]) for c in CH_IDS)
+    ticks = "".join(f'<span style="left:{k / (n - 1) * 100:.2f}%"></span>' for k in range(n))
     return (f'<div class="chap-top"><a class="chap-all" href="/#chapters">{ICON["left"]}All chapters</a>'
-            f'<span class="chap-of">Chapter {i} of {len(CHAPTERS)}</span>'
-            f'<span class="chap-meter" aria-hidden="true"><span style="width:{i / len(CHAPTERS) * 100:.1f}%"></span></span></div>')
+            f'<span class="chap-of" aria-hidden="true">Chapter <b>{i}</b> of {n}</span>'
+            f'<span class="chap-meter" aria-hidden="true"><span style="width:{i / n * 100:.1f}%"></span></span>'
+            f'<span class="chap-slide" style="--p:{(i - 1) / (n - 1) * 100:.2f}%"><span class="chap-ticks" aria-hidden="true">{ticks}</span>'
+            f'<input class="chap-range" type="range" min="1" max="{n}" step="1" value="{i}" aria-label="Chapter {i} of {n}. Slide to open another chapter"'
+            f' aria-valuetext="Chapter {i} of {n}: {esc(CH_TITLE[cid])}" data-urls="{urls}" data-titles="{titles}"></span>'
+            f'<span class="chap-tip" aria-live="polite" hidden></span></div>')
 
 def neighbours(cid):
     """(href, label) for the previous and next stop: the home page before chapter 1, the source list after the last."""
