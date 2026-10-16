@@ -25,9 +25,8 @@
 <text x="42" y="370" font-family="JetBrains Mono, monospace" font-size="15" font-weight="500" letter-spacing="1.5" fill="#8fa1ad">RELIES ON</text>
 <text x="42" y="396" font-family="Be Vietnam Pro, sans-serif" font-size="17" font-weight="500" fill="#f1f5f8">identity state published on Redbelly</text>
 <rect x="42" y="424" width="396" height="120" rx="6" fill="#1d3140" stroke="#EF5350" stroke-width="2"/>
-<rect x="60" y="442" width="125.6" height="26" rx="13" fill="none" stroke="#FCD34D" stroke-width="1.5"/>
-<circle cx="78.0" cy="455.0" r="3.4" fill="#FCD34D"/>
-<text x="92" y="460.4" font-family="JetBrains Mono, monospace" font-size="15" font-weight="500" letter-spacing="1.2" fill="#FCD34D">ANALYSIS</text>
+<circle cx="64.5" cy="455.0" r="4" fill="#FCD34D"/>
+<text x="75" y="460.4" font-family="JetBrains Mono, monospace" font-size="15" font-weight="500" letter-spacing="1.2" fill="#FCD34D">ANALYSIS</text>
 <text font-family="Be Vietnam Pro, sans-serif" fill="#f1f5f8"><tspan x="60" y="496" font-size="17" font-weight="700" fill="#ffb3ae">Another chain:</tspan><tspan x="60" dy="24" font-size="16" fill="#c2ced6">only if the setup is rebuilt there</tspan></text>
 <rect x="500" y="166" width="440" height="400" rx="6" fill="#17222a" stroke="#263641" stroke-width="1.5"/>
 <rect x="522" y="188" width="48" height="48" rx="8" fill="#1d3140"/>
@@ -41,9 +40,8 @@
 <text x="522" y="370" font-family="JetBrains Mono, monospace" font-size="15" font-weight="500" letter-spacing="1.5" fill="#8fa1ad">RELIES ON</text>
 <text x="522" y="396" font-family="Be Vietnam Pro, sans-serif" font-size="17" font-weight="500" fill="#f1f5f8">the issuer&apos;s BBS+ signature</text>
 <rect x="522" y="424" width="396" height="120" rx="6" fill="#141f26" stroke="#FCD34D" stroke-width="1.5"/>
-<rect x="540" y="442" width="125.6" height="26" rx="13" fill="none" stroke="#FCD34D" stroke-width="1.5"/>
-<circle cx="558.0" cy="455.0" r="3.4" fill="#FCD34D"/>
-<text x="572" y="460.4" font-family="JetBrains Mono, monospace" font-size="15" font-weight="500" letter-spacing="1.2" fill="#FCD34D">ANALYSIS</text>
+<circle cx="544.5" cy="455.0" r="4" fill="#FCD34D"/>
+<text x="555" y="460.4" font-family="JetBrains Mono, monospace" font-size="15" font-weight="500" letter-spacing="1.2" fill="#FCD34D">ANALYSIS</text>
 <text font-family="Be Vietnam Pro, sans-serif" fill="#f1f5f8"><tspan x="540" y="496" font-size="16" font-weight="600" fill="#f1f5f8">Could be checked anywhere in principle,</tspan><tspan x="540" dy="24" font-size="16" fill="#c2ced6">no such Overledger app foundday</tspan></text>
 <rect x="20" y="590" width="920" height="60" rx="6" fill="#0c1317" stroke="#223039" stroke-width="1.5"/>
 <g transform="translate(181.5 609) scale(0.916667)" fill="none" stroke="#EF5350" stroke-width="1.96" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8.5 10.5V7.8a3.5 3.5 0 0 1 7 0v2.7M12 14.5v2.2"/></g>

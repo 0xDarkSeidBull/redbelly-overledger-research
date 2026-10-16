@@ -10,9 +10,8 @@
   <rect x="10" y="12" width="380" height="374" rx="6" fill="#0c1317" stroke="#223039" stroke-width="1.5"/>
   <rect x="26" y="40.5" width="18" height="4" rx="2" fill="#EF5350"/>
   <text x="52" y="48" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" letter-spacing="1.5" fill="#8fa1ad">READ</text>
-  <rect x="106" y="31" width="102" height="24" rx="12" fill="#86EFAC"/>
-  <circle cx="123.0" cy="43.0" r="3.4" fill="#0c1317"/>
-  <text x="137" y="47.8" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" letter-spacing="1.1" fill="#0c1317">TESTED</text>
+  <circle cx="110.5" cy="43.0" r="4" fill="#86EFAC"/>
+  <text x="121" y="47.8" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" letter-spacing="1.1" fill="#86EFAC">TESTED</text>
   <rect x="26" y="72" width="348" height="106" rx="6" fill="#17222a" stroke="#263641" stroke-width="1.5"/>
   <text x="42" y="105" font-family="Be Vietnam Pro, sans-serif" font-size="17" font-weight="700" fill="#f1f5f8">Public RPC</text>
   <circle cx="44" cy="128.5" r="2.5" fill="#8fa1ad"/>
@@ -35,9 +34,8 @@
   <rect x="10" y="400" width="380" height="462" rx="6" fill="#0c1317" stroke="#223039" stroke-width="1.5"/>
   <rect x="26" y="428.5" width="18" height="4" rx="2" fill="#EF5350"/>
   <text x="52" y="436" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" letter-spacing="1.5" fill="#8fa1ad">WRITE</text>
-  <rect x="116" y="419" width="130" height="24" rx="12" fill="none" stroke="#86EFAC" stroke-width="1.5"/>
-  <circle cx="133.0" cy="431.0" r="3.4" fill="#86EFAC"/>
-  <text x="147" y="435.8" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" letter-spacing="1.1" fill="#86EFAC">CONFIRMED</text>
+  <circle cx="120.5" cy="431.0" r="4" fill="#86EFAC"/>
+  <text x="131" y="435.8" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" letter-spacing="1.1" fill="#86EFAC">CONFIRMED</text>
   <rect x="134" y="460" width="132" height="44" rx="6" fill="#17222a" stroke="#263641" stroke-width="1.5"/>
   <text x="200" y="487.5" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-size="16" font-weight="600" fill="#f1f5f8">Wallet</text>
   <circle cx="200" cy="504" r="3" fill="#8fa1ad"/>

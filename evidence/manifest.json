@@ -81,8 +81,8 @@
   "file": "evidence/snapshots/github-com-redbelly-dao-community-taskboard-task-08-bridge-integration-guide.txt",
   "url": "https://github.com/Redbelly-DAO-Community-Taskboard/TASK-08-bridge-integration-guide",
   "captured_utc": "2026-10-15T08:24:03Z",
-  "sha256": "a5ab7957c0636c2537f23fcecfa0d1da52f6bba7973d95352bd4ad4c6a030724",
-  "note": "two personal names replaced with [name removed]"
+  "sha256": "2395fa7d656a15de508e4749fbb01cf3e2e1e8219cefa3a3222b9c4ceb87ce16",
+  "note": "two personal names in this copy were replaced with [name removed], and three links to a contributor website with [link removed], because the Task Board does not allow personal credit inside a deliverable. Nothing else was changed."
  },
  {
   "file": "evidence/snapshots/quant-network-press-releases-the-clearing-house-partners-with-quant-to-advance-the-on-chai.txt",
@@ -106,7 +106,8 @@
   "file": "evidence/snapshots/taskboard-redbellydao-network-tasks-task-29.txt",
   "url": "https://taskboard.redbellydao.network/tasks/TASK-29",
   "captured_utc": "2026-10-15T08:23:02Z",
-  "sha256": "4d883562ca64a77d1ebea62154ec5ba3f8c04ed3f8a066633bc9a997f542c801"
+  "sha256": "c90bb0899dbca9c35d5f8de24b59dde413c1d92772fefc775b4dfa5a5d996ca8",
+  "note": "one link to a contributor website was replaced with [link removed], because the Task Board does not allow personal credit inside a deliverable. Nothing else was changed."
  },
  {
   "file": "evidence/snapshots/tokeniser-com-product-superpowers-automated-compliance.txt",

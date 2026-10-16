@@ -6,9 +6,8 @@
 <text x="66" y="36" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#8fa1ad" letter-spacing="1.5">LEVEL</text>
 <text x="66" y="58" font-family="Be Vietnam Pro, sans-serif" font-size="17" font-weight="700" fill="#f1f5f8">Gateway access</text>
 <text font-family="Be Vietnam Pro, sans-serif" font-size="14" font-weight="400" fill="#c2ced6"><tspan x="28" y="88">read data, send self-signed transactions</tspan></text>
-<rect x="28" y="104" width="213.8" height="26" rx="13" fill="none" stroke="#FCD34D" stroke-width="1.5"/>
-<circle cx="45.6" cy="117.0" r="3.4" fill="#FCD34D"/>
-<text x="59.2" y="122.04" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#FCD34D" letter-spacing="1.2">POSSIBLY, UNTESTED</text>
+<circle cx="32.5" cy="117.0" r="4" fill="#FCD34D"/>
+<text x="43" y="122.04" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#FCD34D" letter-spacing="1.2">POSSIBLY, UNTESTED</text>
 <rect x="28" y="150" width="344" height="375" rx="6" fill="#17222a" stroke="#263641" stroke-width="1.5"/>
 <text x="44" y="178" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#8fa1ad" letter-spacing="1.5">IN PLACE</text>
 <line x1="44" y1="190" x2="356" y2="190" stroke="#263641" stroke-width="1"/>
@@ -37,9 +36,8 @@
 <text x="66" y="553" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#8fa1ad" letter-spacing="1.5">LEVEL</text>
 <text x="66" y="575" font-family="Be Vietnam Pro, sans-serif" font-size="17" font-weight="700" fill="#f1f5f8">Flow Apps</text>
 <text font-family="Be Vietnam Pro, sans-serif" font-size="14" font-weight="400" fill="#c2ced6"><tspan x="28" y="605">Quant workflows such as signing</tspan></text>
-<rect x="28" y="621" width="108.2" height="26" rx="13" fill="none" stroke="#EF5350" stroke-width="1.5"/>
-<circle cx="45.6" cy="634.0" r="3.4" fill="#ffb3ae"/>
-<text x="59.2" y="639.04" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#ffb3ae" letter-spacing="1.2">UNKNOWN</text>
+<circle cx="32.5" cy="634.0" r="4" fill="#EF5350"/>
+<text x="43" y="639.04" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#ffb3ae" letter-spacing="1.2">UNKNOWN</text>
 <rect x="28" y="667" width="344" height="115" rx="6" fill="#17222a" stroke="#263641" stroke-width="1.5"/>
 <text x="44" y="695" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#8fa1ad" letter-spacing="1.5">OPEN</text>
 <line x1="44" y1="707" x2="356" y2="707" stroke="#263641" stroke-width="1"/>
@@ -52,9 +50,8 @@
 <text x="66" y="840" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#8fa1ad" letter-spacing="1.5">LEVEL</text>
 <text x="66" y="862" font-family="Be Vietnam Pro, sans-serif" font-size="17" font-weight="700" fill="#f1f5f8">Fusion Rollup</text>
 <text font-family="Be Vietnam Pro, sans-serif" font-size="14" font-weight="400" fill="#c2ced6"><tspan x="28" y="892">deposits, unified balances,</tspan><tspan x="28" dy="19">cross-chain messages</tspan></text>
-<rect x="28" y="927" width="194.6" height="26" rx="13" fill="#EF5350" stroke="#EF5350" stroke-width="1.5"/>
-<circle cx="45.6" cy="940.0" r="3.4" fill="#ffffff"/>
-<text x="59.2" y="945.04" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#ffffff" letter-spacing="1.2">NOT POSSIBLE YET</text>
+<circle cx="32.5" cy="940.0" r="4" fill="#EF5350"/>
+<text x="43" y="945.04" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#ffb3ae" letter-spacing="1.2">NOT POSSIBLE YET</text>
 <rect x="28" y="973" width="344" height="285" rx="6" fill="#17222a" stroke="#263641" stroke-width="1.5"/>
 <text x="44" y="1001" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#8fa1ad" letter-spacing="1.5">IN PLACE</text>
 <line x1="44" y1="1013" x2="356" y2="1013" stroke="#263641" stroke-width="1"/>

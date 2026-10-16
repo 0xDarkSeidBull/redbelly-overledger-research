@@ -4,6 +4,9 @@ then rewrites evidence/manifest.json (URL, capture time in UTC, SHA-256).
 Most pages are rendered with Playwright (Chromium). Three need another route:
   the Celer blog shows a bot check in a browser, so it is fetched with a plain HTTP request;
   the X post is read from X's public embed service; the TASK-16 PDF is converted with pdftotext.
+Personal credit is removed from every copy before it is saved: names listed in the local, git-ignored .credit-names file
+become [name removed], and links to sites listed in the local, git-ignored .credit-links file become [link removed].
+A NOTE line under the title says what was replaced, and the manifest keeps that note.
 After a recapture, run scripts/check.py: it fails if any quote is no longer on its page."""
 import hashlib, html, json, re, subprocess, urllib.request
 from datetime import datetime, timezone
@@ -40,6 +43,24 @@ def rawmd(s):
     raw = s["url"].replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
     return f"URL: {s['url']}\nTITLE: {s['title']} (raw Markdown)\n\n" + get(raw).decode("utf-8")
 
+def local_list(name):
+    p = ROOT / name
+    return [l.strip() for l in p.read_text().splitlines() if l.strip()] if p.exists() else []
+
+def redact(text):
+    """Removes personal credit from a copy and says so under its title."""
+    names = links = 0
+    for n in local_list(".credit-names"):
+        text, k = re.subn(re.escape(n), "[name removed]", text, flags=re.I); names += k
+    for host in local_list(".credit-links"):
+        text, k = re.subn(r"(?:https?://)?[\w.-]*" + re.escape(host) + r"[^\s)\]]*", "[link removed]", text); links += k
+    if names or links:
+        parts = ([f"{names} personal name{'s' if names != 1 else ''} with [name removed]"] if names else []) + \
+                ([f"{links} link{'s' if links != 1 else ''} to a contributor website with [link removed]"] if links else [])
+        note = "NOTE: " + " and ".join(parts) + ", because the Task Board does not allow personal credit inside a deliverable. Nothing else was changed."
+        lines = text.split("\n"); lines.insert(2, note); text = "\n".join(lines)
+    return text
+
 def main():
     from playwright.sync_api import sync_playwright
     sources = [s for s in json.loads((ROOT / "content/sources.json").read_text()) if not s.get("local")]
@@ -63,7 +84,7 @@ def main():
                     pass
                 pg.wait_for_timeout(2500)
                 text = f"URL: {s['url']}\nTITLE: {pg.title()}\n\n{pg.inner_text('body')}"; pg.close()
-            f.write_text(text); print("captured", s["id"])
+            f.write_text(redact(text)); print("captured", s["id"])
         b.close()
     man = []
     for p in sorted((ROOT / "evidence").rglob("*.txt")):
@@ -71,7 +92,10 @@ def main():
         man.append({"file": str(p.relative_to(ROOT)), "url": head[0][5:] if head and head[0].startswith("URL: ") else None,
                     "captured_utc": datetime.fromtimestamp(p.stat().st_mtime, timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                     "sha256": hashlib.sha256(p.read_bytes()).hexdigest()})
-    (ROOT / "evidence/manifest.json").write_text(json.dumps(man, indent=1))
+        note = next((l[6:] for l in p.read_text(encoding="utf-8", errors="ignore").splitlines()[:4] if l.startswith("NOTE: ")), None)
+        if note:
+            man[-1]["note"] = note
+    (ROOT / "evidence/manifest.json").write_text(json.dumps(man, indent=1, ensure_ascii=False) + "\n")
 
 if __name__ == "__main__":
     main()

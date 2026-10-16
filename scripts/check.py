@@ -7,11 +7,14 @@ Checks:
   2  every citation points to a known fact, every source is cited, every paragraph with a status label cites at least one fact
   3  no wording that suggests a partnership, talks, plans or an agreement between Redbelly and Quant
   4  no price talk, investment advice or hype words, no en dash, em dash or emoji
-  5  no personal name or handle from the local, git-ignored .credit-names file anywhere in the deliverables
+  5  no personal name or handle from the local, git-ignored .credit-names file, and no link to a site listed in the
+     local, git-ignored .credit-links file, anywhere in the deliverables; the Word file carries no tool or person in its properties
   6  each X post fits in 280 characters
-  7  the PDF, the Word file and the web page contain the current text of every paragraph, and the source page every quote
+  7  the PDF, the Word file and the website (home page and every chapter page) contain the current text of every paragraph,
+     and the source page every quote
   8  diagrams follow the SVG rules (brand palette, prefixed ids, title and desc, no styles, images or outside links),
      and the website loads nothing from another domain
+  9  every link inside the website opens a page that exists, at a clean address (no .html), and every #anchor exists
 """
 import hashlib, json, re, subprocess, sys, urllib.request
 from pathlib import Path
@@ -139,10 +142,11 @@ for w, t in texts + [("fact " + f["id"], f["quote"]) for f in FACTS]:
         errors.append(f"{w}: contains an emoji or symbol")
 
 # 5 personal credit
-cn = ROOT / ".credit-names"
-deliverables = [p for p in ROOT.rglob("*") if p.is_file() and not any(x in p.parts for x in (".git", "build", "__pycache__")) and p.name != ".credit-names"]
+cn, cl = ROOT / ".credit-names", ROOT / ".credit-links"
+deliverables = [p for p in ROOT.rglob("*") if p.is_file() and not any(x in p.parts for x in (".git", "build", "__pycache__")) and p.name not in (".credit-names", ".credit-links")]
 if cn.exists():
     names = [n.strip().lower() for n in cn.read_text().splitlines() if n.strip()]
+    names += [n.strip().lower() for n in cl.read_text().splitlines() if n.strip()] if cl.exists() else []
     for p in deliverables:
         if p.suffix in (".woff2",):
             continue
@@ -155,11 +159,20 @@ if cn.exists():
             body = p.read_bytes().decode("utf-8", "ignore")
         for n in names:
             if n in body.lower():
-                errors.append(f"personal credit: {p.relative_to(ROOT)} contains a listed name")
+                errors.append(f"personal credit: {p.relative_to(ROOT)} contains a listed name or link")
     if re.search(r"made by|created by|author:", " ".join(t for _, t in texts), re.I):
         errors.append("personal credit: a 'made by' style line")
 else:
     notes.append("personal credit scan skipped, .credit-names not present")
+
+docx_file = ROOT / "public/downloads/redbelly-overledger-feasibility-report.docx"
+if docx_file.exists():
+    from docx import Document
+    cp = Document(docx_file).core_properties
+    for field in ("author", "last_modified_by", "comments"):
+        v = (getattr(cp, field) or "").lower()
+        if "python-docx" in v or any(n in v for n in (names if cn.exists() else [])):
+            errors.append(f"Word file: the {field} property names a tool or a person")
 
 # 6 X thread length (a link counts as 23 characters on X)
 for i, t in enumerate(R["community_summary"]["thread"], 1):
@@ -171,6 +184,7 @@ for i, t in enumerate(R["community_summary"]["thread"], 1):
 pdf = ROOT / "public/downloads/redbelly-overledger-feasibility-report.pdf"
 docx = ROOT / "public/downloads/redbelly-overledger-feasibility-report.docx"
 web, srcpage = ROOT / "public/index.html", ROOT / "public/sources.html"
+chapter_pages = sorted((ROOT / "public/chapters").glob("*.html"))
 import html as H
 def squash(t):
     return re.sub(r"[^a-z0-9]", "", norm(t).lower())
@@ -181,8 +195,8 @@ if docx.exists():
     from docx import Document
     d = Document(docx)
     outs["Word file"] = squash("\n".join([p.text for p in d.paragraphs] + [c.text for t in d.tables for r in t.rows for c in r.cells]))
-if web.exists():
-    outs["web page"] = squash(H.unescape(re.sub(r"<[^>]+>", " ", web.read_text())))
+if web.exists() and chapter_pages:
+    outs["web page"] = squash(H.unescape(re.sub(r"<[^>]+>", " ", "\n".join(p.read_text() for p in [web] + chapter_pages))))
 for name in ("PDF", "Word file", "web page"):
     if name not in outs:
         errors.append(f"{name} missing, run scripts/build.py")
@@ -203,16 +217,58 @@ else:
     errors.append("public/sources.html missing, run scripts/build.py")
 
 # 8 the website loads nothing from outside its own domain (links to sources are fine)
-for p in [web, srcpage, ROOT / "public/site.css", ROOT / "public/site.js"]:
+for p in sorted((ROOT / "public").rglob("*.html")) + [ROOT / "public/site.css", ROOT / "public/site.js"]:
     if not p.exists():
         continue
     t = p.read_text()
     for m in re.finditer(r"<(script|link|img|iframe|source|video|audio)\b[^>]*\b(src|href)=[\"'](https?:)?//", t, re.I):
+        if re.search(r'rel="canonical"', m.group(0)):
+            continue   # names the page's own address, loads nothing
         errors.append(f"{p.name}: loads an outside resource ({m.group(0)[:60]})")
     for m in re.finditer(r"url\(\s*[\"']?(https?:)?//", t):
         errors.append(f"{p.name}: CSS loads an outside resource")
     if re.search(r"\u2013|\u2014", t):
         errors.append(f"{p.name}: contains an en dash or em dash")
+
+# 9 links inside the website resolve, with clean addresses (Vercel cleanUrls serves /sources from sources.html)
+PUBD = ROOT / "public"
+_ids = {}
+def ids_in(p):
+    if p not in _ids:
+        _ids[p] = set(re.findall(r'\sid="([^"]+)"', p.read_text()))
+    return _ids[p]
+def resolve(path):
+    path = path.split("?")[0]
+    if path == "/":
+        return PUBD / "index.html"
+    f = PUBD / path.lstrip("/")
+    for c in (f, PUBD / (path.lstrip("/") + ".html"), f / "index.html"):
+        if c.is_file():
+            return c
+    return None
+pages = sorted(PUBD.rglob("*.html"))
+if not (PUBD / "404.html").exists():
+    errors.append("public/404.html missing, run scripts/build.py")
+for p in pages:
+    rel = p.relative_to(ROOT)
+    for m in re.finditer(r'\s(href|src)="([^"]+)"', p.read_text()):
+        u = H.unescape(m.group(2))
+        if u.startswith(("https://", "http://", "mailto:")):
+            continue
+        if u.startswith("#"):
+            if len(u) > 1 and u[1:] not in ids_in(p):
+                errors.append(f"{rel}: link {u} points to an anchor that is not on the page")
+            continue
+        if not u.startswith("/"):
+            errors.append(f"{rel}: link {u} is relative, use a path from the site root"); continue
+        path, _, frag = u.partition("#")
+        if path.split("?")[0].endswith(".html"):
+            errors.append(f"{rel}: link {u} ends in .html, use the clean address")
+        target = resolve(path)
+        if target is None:
+            errors.append(f"{rel}: link {u} opens nothing")
+        elif frag and target.suffix == ".html" and frag not in ids_in(target):
+            errors.append(f"{rel}: link {u} points to an anchor that is not on {target.name}")
 
 # online: every source link answers
 if "--online" in sys.argv:

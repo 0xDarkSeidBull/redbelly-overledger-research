@@ -1,5 +1,6 @@
 URL: https://taskboard.redbellydao.network/tasks/TASK-29
 TITLE: Quant Overledger and Redbelly Interoperability Research (TASK-29) | Redbelly DAO Task Board
+NOTE: one link to a contributor website was replaced with [link removed], because the Task Board does not allow personal credit inside a deliverable. Nothing else was changed.
 
 Skip to content
 Task Board
@@ -62,7 +63,7 @@ Receptor overview: https://docs.redbelly.network/pages/receptor/
 Tokeniser website (product, technology, why tokenise, knowledge hub): https://tokeniser.com
 Celer cBridge support for Redbelly (RBNT to and from Ethereum and BNB Chain): https://blog.celer.network/2025/08/01/celer-announces-cbridge-support-for-redbelly/
 Wrapped RBNT on Ethereum, official contract 0xb45ffb51984d626ee758b336c61cf20990c6bf13 as announced by Redbelly: https://x.com/RedbellyNetwork/status/1890340030197166112
-TASK-08 bridge integration guide (winning entry, Sepolia to Redbelly testnet bridge): https://redbridge.test-hub.xyz/
+TASK-08 bridge integration guide (winning entry, Sepolia to Redbelly testnet bridge): [link removed]
 TASK-08 repositories: and https://github.com/ashrtonomica/task08: https://github.com/Redbelly-DAO-Community-Taskboard/TASK-08-bridge-integration-guide
 Another TASK-08 testnet bridge, with research on which bridge protocols support Redbelly: https://github.com/tycayomide/redbelly-testnet-bridge
 TASK-16 cross chain recovery playbook (winning entry): https://github.com/Redbelly-DAO-Community-Taskboard/TASK-16-cross-chain-recovery-playbook

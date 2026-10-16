@@ -1,4 +1,4 @@
-// Report and source list behaviour. No dependencies; everything degrades to plain links without JavaScript.
+// Report and source list behaviour. No dependencies; every page is a plain HTML page and works without JavaScript.
 (function () {
   "use strict";
   document.documentElement.classList.add("js");
@@ -12,157 +12,52 @@
     var h = document.documentElement.scrollHeight - window.innerHeight;
     var p = h > 0 ? Math.min(1, window.scrollY / h) : 0;
     if (bar) bar.style.transform = "scaleX(" + p + ")";
-    if (toTop) toTop.classList.toggle("show", window.scrollY > 400);
   }
   window.addEventListener("scroll", onScroll, { passive: true });
   onScroll();
   if (toTop) toTop.addEventListener("click", function () { window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" }); });
 
-  // ---------- "On this page": active section, sliding marker, read progress, mobile chips ----------
-  var tocLinks = $$(".toc a[data-t]"), chipLinks = $$(".chips a[data-t]");
-  var ids = tocLinks.map(function (a) { return a.getAttribute("data-t"); });
-  var targets = ids.map(function (id) { return document.getElementById(id); });
-  var ind = $(".toc-ind"), fill = $(".toc-fill"), track = $(".toc-track");
-  var current = -1;
-  function moveMarker(i) {
-    if (!ind || !tocLinks[i] || !track) return;
-    var a = tocLinks[i], tr = track.getBoundingClientRect(), r = a.getBoundingClientRect();
-    ind.style.transform = "translateY(" + (r.top - tr.top + 4) + "px)";
-    ind.style.height = Math.max(18, r.height - 8) + "px";
-    ind.style.opacity = "1";
-  }
-  // ---------- chapters: the report opens on the key findings and a chapter list, and shows one chapter at a time ----------
-  var chapIds = $$(".chap-card").map(function (a) { return a.getAttribute("href").slice(1); });
-  var chapEls = chapIds.map(function (id) { return document.getElementById(id); }).filter(Boolean);
-  var homeEls = [$(".hero"), $("#findings"), $(".legend-card"), $("#chapters")].filter(Boolean);
-  var view = null;
-  function chapterOf(el) {
-    for (var n = el; n; n = n.parentNode) { if (n.id && chapIds.indexOf(n.id) !== -1) return n.id; }
-    return null;
-  }
-  function route(first) {
-    var h = decodeURIComponent(location.hash.slice(1)), el = h ? document.getElementById(h) : null;
-    var next = el ? chapterOf(el) || "home" : "home";
-    if (next !== view) {
-      view = next;
-      homeEls.forEach(function (e) { e.hidden = view !== "home"; });
-      chapEls.forEach(function (e) { e.hidden = e.id !== view; e.classList.toggle("chap-view", e.id === view); });
-      var shown = view === "home" ? homeEls : [document.getElementById(view)];
-      shown.forEach(function (e) {
-        $$(".rv", e).forEach(function (r) { r.classList.add("in"); });
-        if (!first && !reduce) { e.classList.remove("view-in"); void e.offsetWidth; e.classList.add("view-in"); }
-      });
-      twJob++;
-      if (view !== "home") typeTitle(document.getElementById(view));
-    }
-    var off = window.innerWidth <= 1080 ? 64 : 16;
-    if (el && el.id !== view && !(view === "home" && el.id === "findings" && first)) {
-      window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - off, behavior: "instant" });
-    } else if (!first || view !== "home") {
-      window.scrollTo({ top: 0, behavior: "instant" });
-    }
-    current = -1; setActive(); onScroll();
-  }
-  var chapterMode = chapEls.length > 0;
-
-  // Typewriter: when a chapter opens, its title types in behind a red block cursor.
-  var twJob = 0;
-  function typeTitle(sec) {
-    var h = sec && $("h2", sec);
-    if (!h || reduce) return;
-    var full = h.getAttribute("data-full") || h.textContent;
-    h.setAttribute("data-full", full); h.setAttribute("aria-label", full);
-    var job = ++twJob, i = 0, txt = document.createElement("span"), caret = document.createElement("span");
-    caret.className = "tw-caret"; caret.setAttribute("aria-hidden", "true");
-    txt.setAttribute("aria-hidden", "true");
-    h.textContent = ""; h.appendChild(txt); h.appendChild(caret);
-    (function step() {
-      if (job !== twJob) { h.textContent = full; return; }
-      i = Math.min(full.length, i + (full.length > 40 ? 2 : 1));
-      txt.textContent = full.slice(0, i);
-      if (i < full.length) setTimeout(step, 28); else setTimeout(function () { if (job === twJob) h.textContent = full; }, 350);
-    })();
-  }
-
-  function setActive() {
-    if (!targets.length) return;
-    var idx;
-    if (chapterMode) {
-      var key = view;
-      if (view === "home") {
-        var cs = document.getElementById("chapters");
-        key = cs && cs.getBoundingClientRect().top <= window.innerHeight * 0.4 ? "chapters" : "findings";
-      }
-      idx = ids.indexOf(key);
-      syncChrome(key);
-    } else {
-      var line = window.innerHeight * 0.32; idx = 0;
-      targets.forEach(function (t, i) { if (t && t.getBoundingClientRect().top <= line) idx = i; });
-      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) idx = targets.length - 1;
-      if (fill && targets[0]) {
-        var first = targets[0].getBoundingClientRect().top + window.scrollY;
-        var last = targets[targets.length - 1].getBoundingClientRect().bottom + window.scrollY - window.innerHeight;
-        var q = last > first ? (window.scrollY - first) / (last - first) : 0;
-        fill.style.transform = "scaleY(" + Math.max(0, Math.min(1, q)) + ")";
-      }
-    }
-    if (idx === current) return;
-    current = idx;
-    [tocLinks, chipLinks].forEach(function (list) {
-      list.forEach(function (a, i) {
-        a.classList.toggle("active", i === idx);
-        if (i === idx) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current");
-      });
-    });
-    moveMarker(idx);
-    var chip = chipLinks[idx];
-    if (chip && chip.parentNode && chip.parentNode.parentNode) {
-      var box = chip.parentNode.parentNode, cr = chip.getBoundingClientRect(), br = box.getBoundingClientRect();
-      if (cr.left < br.left || cr.right > br.right) box.scrollBy({ left: cr.left - br.left - 24, behavior: reduce ? "auto" : "smooth" });
-    }
-  }
-  if (targets.length) {
-    window.addEventListener("scroll", setActive, { passive: true });
-    window.addEventListener("resize", function () { moveMarker(current); setActive(); });
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { moveMarker(current); });
-    if (!chapterMode) {
-      setActive();
-      tocLinks.concat(chipLinks).forEach(function (a) {
-        a.addEventListener("click", function (e) {
-          var t = document.getElementById(a.getAttribute("data-t"));
-          if (!t) return;
-          e.preventDefault();
-          var off = window.innerWidth <= 1080 ? 64 : 16;
-          window.scrollTo({ top: t.getBoundingClientRect().top + window.scrollY - off, behavior: reduce ? "auto" : "smooth" });
-          history.replaceState(null, "", "#" + t.id);
-        });
-      });
-    }
-  }
-  // ---------- menu sub list and the bottom dock ----------
-  var group = $(".rn-group"), tog = $(".rn-tog"), userOpen = null;
-  var dock = $(".dock"), sheet = $("#sheet"), chapBtn = $(".dk-chap"), mid = $(".dk-mid"), home = $(".dk-home");
+  // ---------- side menu: the entry for the part of the page in view is boxed (home page and source list) ----------
+  var pairs = $$(".toc a[data-t]").map(function (a) {
+    var href = a.getAttribute("href") || "";
+    return href.charAt(0) === "#" ? { a: a, t: document.getElementById(a.getAttribute("data-t")) } : null;
+  }).filter(function (p) { return p && p.t; });
+  var chips = $$(".chips a[data-t]");
+  var group = $(".rn-group"), tog = $(".rn-tog"), userOpen = null, current = -1;
   function setOpen(open) {
     if (!group) return;
     group.classList.toggle("open", open);
     if (tog) tog.setAttribute("aria-expanded", String(open));
   }
-  function syncChrome(key) {
-    // The chapter list stays open while a chapter or the chapter grid is in view, unless the reader closed it.
-    setOpen(userOpen !== null ? userOpen : key !== "findings");
-    var ci = chapIds.indexOf(view);
-    if (mid) mid.hidden = ci === -1;
-    if (home) { home.hidden = ci !== -1; home.classList.toggle("on", key === "findings"); }
-    if (ci !== -1) {
-      $(".dk-pos").textContent = (ci + 1) + " / " + chapIds.length;
-      $(".dk-prev").setAttribute("href", "#" + (ci > 0 ? chapIds[ci - 1] : "chapters"));
-      var nx = $(".dk-next");
-      if (ci + 1 < chapIds.length) { nx.setAttribute("href", "#" + chapIds[ci + 1]); nx.setAttribute("aria-label", "Next chapter"); }
-      else { nx.setAttribute("href", "sources.html"); nx.setAttribute("aria-label", "Source list"); }
+  function setActive() {
+    if (!pairs.length) return;
+    var line = window.innerHeight * 0.35, idx = 0;
+    pairs.forEach(function (p, i) { if (p.t.getBoundingClientRect().top <= line) idx = i; });
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) idx = pairs.length - 1;
+    if (idx === current) return;
+    current = idx;
+    pairs.forEach(function (p, i) {
+      p.a.classList.toggle("active", i === idx);
+      if (i === idx) p.a.setAttribute("aria-current", "true"); else p.a.removeAttribute("aria-current");
+    });
+    chips.forEach(function (c) { c.classList.toggle("active", c.getAttribute("data-t") === pairs[idx].a.getAttribute("data-t")); });
+    // On the home page the chapter list opens once the chapter cards are in view, unless the reader has closed it.
+    if (group && userOpen === null) setOpen(pairs[idx].a.getAttribute("data-t") === "chapters");
+    var chip = chips.filter(function (c) { return c.classList.contains("active"); })[0];
+    if (chip && chip.parentNode && chip.parentNode.parentNode) {
+      var box = chip.parentNode.parentNode, cr = chip.getBoundingClientRect(), br = box.getBoundingClientRect();
+      if (cr.left < br.left || cr.right > br.right) box.scrollBy({ left: cr.left - br.left - 24, behavior: reduce ? "auto" : "smooth" });
     }
-    if (sheet) $$("a", sheet).forEach(function (a) { a.classList.toggle("active", a.getAttribute("href") === "#" + view); });
+  }
+  if (pairs.length) {
+    window.addEventListener("scroll", setActive, { passive: true });
+    window.addEventListener("resize", setActive);
+    setActive();
   }
   if (tog) tog.addEventListener("click", function () { userOpen = !group.classList.contains("open"); setOpen(userOpen); });
+
+  // ---------- chapter list from the bottom bar ----------
+  var sheet = $("#sheet"), chapBtn = $(".dk-chap");
   function closeSheet() { if (sheet && !sheet.hidden) { sheet.hidden = true; chapBtn.setAttribute("aria-expanded", "false"); } }
   if (chapBtn && sheet) {
     chapBtn.addEventListener("click", function (e) {
@@ -171,15 +66,21 @@
       sheet.hidden = !open; chapBtn.setAttribute("aria-expanded", String(open));
       if (open) { var a = $("a.active", sheet) || $("a", sheet); if (a) a.focus({ preventScroll: true }); }
     });
-    $$("a", sheet).forEach(function (a) { a.addEventListener("click", closeSheet); });
-    document.addEventListener("click", function (e) { if (!sheet.contains(e.target) && e.target !== chapBtn) closeSheet(); });
+    document.addEventListener("click", function (e) { if (!sheet.contains(e.target) && !chapBtn.contains(e.target)) closeSheet(); });
     document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !sheet.hidden) { closeSheet(); chapBtn.focus(); } });
   }
 
-  if (chapterMode) {
-    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
-    window.addEventListener("hashchange", function () { route(false); });
-    route(true);
+  // ---------- chapter pages: the left and right arrow keys open the previous and next chapter ----------
+  var prevLink = $('link[rel="prev"]'), nextLink = $('link[rel="next"]');
+  if (prevLink || nextLink) {
+    document.addEventListener("keydown", function (e) {
+      if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.defaultPrevented) return;
+      var t = e.target, tag = t && t.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || (t && t.isContentEditable)) return;
+      if ($(".viewer.open") || (sheet && !sheet.hidden)) return;
+      var go = e.key === "ArrowLeft" ? prevLink : e.key === "ArrowRight" ? nextLink : null;
+      if (go) { e.preventDefault(); window.location.href = go.getAttribute("href"); }
+    });
   }
 
   // ---------- reveal on scroll ----------
@@ -210,7 +111,7 @@
       pop.addEventListener("mouseleave", hidePop);
     }
     pop.innerHTML = '<p class="ph"><b>S' + n + '</b><span>' + esc(src.p) + ": " + esc(src.t) + "</span></p>" +
-      facts.map(function (f) { return "<q>" + esc(data.facts[f]) + "</q>"; }).join("") +
+      facts.map(function (f) { return data.facts[f] ? "<q>" + esc(data.facts[f]) + "</q>" : ""; }).join("") +
       '<a class="pl" href="' + a.getAttribute("href") + '">See it in the source list <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>';
     var r = a.getBoundingClientRect(), w = Math.min(380, window.innerWidth - 32);
     var left = Math.max(16, Math.min(r.left + window.scrollX - 20, window.scrollX + window.innerWidth - w - 16));
@@ -271,12 +172,13 @@
   var viewer = $(".viewer");
   if (viewer) {
     var vin = $(".vin", viewer), lastBtn = null;
-    function closeV() { viewer.classList.remove("open"); viewer.setAttribute("aria-hidden", "true"); if (lastBtn) lastBtn.focus(); }
+    var closeV = function () { viewer.classList.remove("open"); viewer.setAttribute("aria-hidden", "true"); if (lastBtn) lastBtn.focus(); };
     $$(".fig .zoom").forEach(function (btn) {
       btn.addEventListener("click", function () {
         var art = btn.closest(".fig").querySelector(".art.wide svg");
         vin.innerHTML = ""; vin.appendChild(art.cloneNode(true));
         $$("[id]", vin).forEach(function (el) { el.id = "v-" + el.id; });
+        $$("[aria-labelledby]", vin).forEach(function (el) { el.setAttribute("aria-labelledby", el.getAttribute("aria-labelledby").split(" ").map(function (x) { return "v-" + x; }).join(" ")); });
         lastBtn = btn; viewer.classList.add("open"); viewer.setAttribute("aria-hidden", "false");
         $(".close", viewer).focus();
       });
@@ -309,6 +211,12 @@
       groups.forEach(function (g) { g.hidden = !$$(".src", g).some(function (c) { return !c.hidden; }); });
       if (count) count.textContent = shown + " of " + cards.length + " sources";
       if (empty) empty.style.display = shown ? "none" : "block";
+    });
+    var find = $(".dk-find");
+    if (find) find.addEventListener("click", function (e) {
+      e.preventDefault();
+      window.scrollTo({ top: input.getBoundingClientRect().top + window.scrollY - 90, behavior: reduce ? "auto" : "smooth" });
+      input.focus({ preventScroll: true });
     });
   }
 })();

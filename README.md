@@ -1,18 +1,17 @@
 # Could Redbelly connect to Quant Overledger? (TASK-29)
 
-Live site: https://overledger.test-hub.xyz
+Live site: https://overledger.vercel.app
 
 A feasibility report on whether Redbelly Network could connect to Quant's Overledger, what that would take, and what it could offer institutions. It uses public sources only. Redbelly and Quant have no announced partnership or talks, and the report does not suggest otherwise.
 
 ## Deliverables
 
-| Deliverable | File |
+| Deliverable | Where |
 |---|---|
-| The report, as PDF and Word | `public/downloads/redbelly-overledger-feasibility-report.pdf`, `public/downloads/redbelly-overledger-feasibility-report.docx` |
-| The report as a web page: key findings, 7 diagrams, the community summary with copy buttons | `public/index.html` |
-| The source list as a web page: every source, the exact words relied on, and where each is used | `public/sources.html` |
-| Short community summary: a few paragraphs and a 6 post X thread | `COMMUNITY-SUMMARY.md` (also in the report and on the site) |
-| Source list, with a link and the exact quoted words for every factual claim | `SOURCES.md` (also at the end of the report and on the site) |
+| The report, as PDF and Word | `public/downloads/redbelly-overledger-feasibility-report.pdf` and `.docx`, also linked from every page of the site |
+| The report as a website: key findings on the home page, then 11 chapters with 7 diagrams | https://overledger.vercel.app, built into `public/` |
+| Short community summary: a few paragraphs and a 6 post X thread | `COMMUNITY-SUMMARY.md`, the last chapter of the report, and https://overledger.vercel.app/chapters/community-summary (with copy buttons) |
+| Source list, with a link and the exact quoted words for every factual claim | `SOURCES.md`, the end of the PDF and Word file, and https://overledger.vercel.app/sources |
 
 ## Short answer
 
@@ -32,6 +31,24 @@ Every paragraph carries one label:
 - **Analysis**: our reasoning from the confirmed facts it cites.
 - **Unknown**: not answered by any public source we found.
 
+Chapter 9 lists everything that is not possible yet or unknown.
+
+## The website
+
+| Address | Page |
+|---|---|
+| `/` | The short answer, the four key findings, how to read the labels, and the list of chapters with reading times |
+| `/chapters/why-now` to `/chapters/community-summary` | One page per chapter, 11 in all. Each shows "Chapter 3 of 11" with a progress bar, and Previous and Next at the end |
+| `/sources` | Every source in groups, the exact words relied on, where each is used, and a filter |
+
+- Every chapter is a real page with its own address, so it can be linked, shared and read without JavaScript. Addresses have no `.html`.
+- The side menu has two entries, Key findings and Chapters. Chapters opens a list of all 11 chapters, with the open chapter boxed in red.
+- The bar at the bottom of the screen gives the chapter list, Previous and Next, the source list and back to top. On a chapter page the left and right arrow keys also go to the previous and next chapter.
+- A citation such as S5 opens the source list at S5 and marks it with a red box. Hovering a citation shows the quoted words first.
+- Status labels follow the Task Board brand kit: a small dot plus a monospace label, on the site and inside the diagrams.
+- Diagrams are drawn in SVG, a wide version for desktop and a narrow one for phones, and each can open full screen.
+- The tab icon is the Task Board icon, and the header carries the DAO logo, both from the brand kit.
+
 ## One source for everything
 
 | Path | What it holds |
@@ -40,15 +57,17 @@ Every paragraph carries one label:
 | `content/facts.json` | 97 facts, each with its source and the exact words quoted from it |
 | `content/sources.json` | 38 sources: publisher, title, link and snapshot file |
 | `content/diagrams.json` | The 7 diagrams: title, caption with citations, and the exact wording each one may show |
-| `public/diagrams/` | The diagrams as hand-written SVG, a wide version for desktop and print and a narrow one for phones |
+| `public/diagrams/` | The diagrams as hand-written SVG |
 | `evidence/snapshots/` | A text snapshot of every source page as it read on 15 October 2026 |
 | `evidence/tests/` | Output of our own JSON-RPC calls to Redbelly and of the calls to the public Overledger API |
 | `evidence/manifest.json` | Address, capture time (UTC) and SHA-256 of every evidence file |
-| `scripts/build.py` | Builds both web pages, the PDF, the Word file, `SOURCES.md` and `COMMUNITY-SUMMARY.md` |
+| `scripts/build.py` | Builds the website, the PDF, the Word file, `SOURCES.md` and `COMMUNITY-SUMMARY.md` |
 | `scripts/site.css`, `scripts/site.js`, `scripts/print.css` | Website style and behaviour, and the print style used for the PDF |
 | `scripts/render_diagram.py` | Renders one diagram to PNG and measures it: smallest text size, overlapping text, text outside its box |
 | `scripts/check.py` | The quality gate, below |
 | `scripts/snap_sources.py` | Recaptures every source page and rewrites the manifest |
+| `scripts/serve.py` | Serves `public/` locally with the same clean addresses as the live site |
+| `vercel.json` | Vercel settings: `public/` is the web root, clean addresses, no build step |
 
 ## Check it
 
@@ -63,49 +82,33 @@ python3 scripts/check.py --online   # also confirms every source link answers to
 - a labelled paragraph cites no source, a citation points to an unknown fact, or a source is never cited
 - any sentence about Redbelly or Quant suggests a partnership, talks, plans or an agreement
 - the text uses investment language or hype words, an en dash, an em dash or an emoji
-- any deliverable contains a personal name or handle listed in a local, git-ignored `.credit-names` file
+- any deliverable contains a personal name, handle or personal website listed in the local, git-ignored `.credit-names` and `.credit-links` files, or the Word file names a tool or a person in its properties
 - an X post is over 280 characters
-- the PDF, the Word file or the web page does not contain the current text of every paragraph, or the source page misses a quote
+- the PDF, the Word file or the website does not contain the current text of every paragraph, or the source list misses a quote
 - a diagram breaks the SVG rules (brand palette only, prefixed ids, title and description, no styles, images or outside links), or its words break the wording rules above
 - the website loads anything from another domain
+- a link inside the website opens nothing, points to a missing anchor, or uses an address ending in `.html`
 
 To repeat the RPC test, run `eth_chainId` and `net_version` against `https://governors.mainnet.redbelly.network` (see `evidence/tests/rpc-check.txt`).
 
-## Rebuild
+## Rebuild and preview
 
 ```
-pip install playwright python-docx
+pip install playwright python-docx pillow
 python3 scripts/build.py
 python3 scripts/check.py
+python3 scripts/serve.py            # then open http://localhost:8000
 ```
 
 Playwright needs Chromium. `pdftotext` (poppler) is used by the check.
 
-## The website
-
-- **Report** (`index.html`): opens on the key findings and a list of 11 chapters, each with its reading time. A chapter opens on its own, with "Chapter 3 of 11", a progress bar, and Previous and Next at the end, so the report is not one long scroll. The side menu jumps between chapters, and links to a figure open the right chapter. It has seven diagrams (each can open full screen) and the community summary with a copy button for the paragraphs, each X post and the whole thread. Without JavaScript the page shows every chapter in one scroll, so nothing is lost.
-- The side menu has two entries, Key findings and Chapters. Chapters opens a sub list of all 11 chapters, and it stays open while a chapter is shown.
-- A bar at the bottom of the screen gives Chapters (a pop-up list), the chapter position with Previous and Next, the source list and back to top.
-- When a chapter opens, its title types in behind a red block cursor, which disappears when the title is complete.
-- Status labels (Confirmed, Tested, Analysis, Unknown), on the site and inside the diagrams, use a small coloured dot, not icons.
-- **Sources** (`sources.html`): every source in groups, with the exact quoted words, where each is used in the report, and a filter. A citation such as S5 in the report opens the source list at S5 and marks it with a red box. Hovering a citation shows the quoted words first.
-- A red button at the bottom left switches between the two pages, and a button at the bottom right goes back to the top.
-
 ## Deploy
 
-The site is static. `public/` is the web root, so nothing outside it is served. On a VPS with Caddy, use `deploy/Caddyfile`:
+The site is static and deploys on Vercel straight from this repository. `vercel.json` sets `public/` as the web root with no build or install step, and turns on clean addresses, so `/sources` serves `public/sources.html`. Nothing outside `public/` is served. Each push to the main branch redeploys the site.
 
-```
-git clone <this repository> /var/www/redbelly-overledger-research
-# add deploy/Caddyfile to /etc/caddy/Caddyfile, then
-sudo systemctl reload caddy
-```
-
-To update: `cd /var/www/redbelly-overledger-research && git pull`.
-
-## Licences
+## Licences and credits
 
 - Fonts: Be Vietnam Pro and JetBrains Mono, SIL Open Font License 1.1 (`licenses/`), self-hosted from `public/fonts/`.
-- Snapshots in `evidence/` are verbatim copies of third-party pages, kept only so every quote can be checked. They keep the source's own punctuation. One exception: in the TASK-08 guide copy, two personal names were replaced with [name removed], because the Task Board does not allow personal credit inside a deliverable; the file header and `evidence/manifest.json` say so.
-- Logo: the official Redbelly DAO logo on dark, from the Task Board brand kit (taskboard.redbellydao.network/brand), used in the site header.
-- Diagrams and icons are drawn for this report in SVG. No third-party images or icons are used.
+- Logo and icon: the Redbelly DAO logo on dark and the Task Board icon, from the Task Board brand kit (taskboard.redbellydao.network/brand).
+- Snapshots in `evidence/` are verbatim copies of third-party pages, kept only so every quote can be checked. They keep the source's own punctuation. Two exceptions, because the Task Board does not allow personal credit inside a deliverable: in the TASK-08 guide copy, two personal names were replaced with [name removed] and three links to a contributor website with [link removed], and in the TASK-29 brief copy one such link was replaced with [link removed]. Each file's header and `evidence/manifest.json` say so.
+- Diagrams are drawn for this report in SVG. No third-party images are used.

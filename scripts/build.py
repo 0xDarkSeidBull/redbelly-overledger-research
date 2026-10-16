@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Builds every output from content/report.json, content/facts.json, content/sources.json and the diagrams:
-  public/index.html        the report, with key findings, diagrams and the community summary (copy buttons)
-  public/sources.html      the source list: every source, the exact words relied on, and where each is cited
-  public/site.css, site.js shared style and behaviour (copied from scripts/)
-  public/downloads/        the report as PDF (Playwright print of build/print.html) and Word (python-docx),
-                           plus SOURCES.md and COMMUNITY-SUMMARY.md
+  public/index.html          home page: the short answer, key findings, how to read the labels and the list of chapters
+  public/chapters/*.html     one page per chapter, served at /chapters/<name> (Vercel cleanUrls)
+  public/sources.html        the source list, served at /sources: every source, the exact words relied on, and where each is cited
+  public/404.html            the page shown for an unknown address
+  public/site.css, site.js   shared style and behaviour (copied from scripts/)
+  public/downloads/          the report as PDF (Playwright print of build/print.html) and Word (python-docx),
+                             plus SOURCES.md and COMMUNITY-SUMMARY.md
   SOURCES.md, COMMUNITY-SUMMARY.md at the repository root
 Diagrams are hand-written SVG in public/diagrams/ID-wide.svg and ID-narrow.svg, specified in content/diagrams.json.
 """
@@ -13,7 +15,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 PUB = ROOT / "public"
-SITE = "https://overledger.test-hub.xyz"
+SITE = "https://overledger.vercel.app"
 PDF_NAME = "redbelly-overledger-feasibility-report.pdf"
 DOCX_NAME = "redbelly-overledger-feasibility-report.docx"
 VERIFIED = "15 Oct 2026"
@@ -132,7 +134,7 @@ def cite_html(ids, mode):
         by.setdefault(NUM[FACTS[fid]["source"]], []).append(fid)
     out = []
     for n in sorted(by):
-        href = f"#s{n}" if mode == "print" else f"sources.html#s{n}"
+        href = f"#s{n}" if mode == "print" else f"/sources#s{n}"
         out.append(f'<a href="{href}" data-n="{n}" data-f="{" ".join(by[n])}" aria-label="Source {n}">S{n}</a>')
     return '<sup class="cite">' + "".join(out) + "</sup>"
 
@@ -211,41 +213,55 @@ def block_html(s, b, mode):
             h += "<ul>" + "".join(f"<li>{rich(li, mode)}</li>" for li in items) + "</ul>"
     return h + "</div>"
 
-def chapters():
-    """The report read as chapters on the website: every section, then the community summary."""
-    return [(s["id"], s["short"], s["kicker"]) for s in R["sections"]] + [("summary", "Community summary", "Share it")]
+# ---------- chapters: the website shows the key findings on the home page and each chapter on its own page ----------
+def slug(t):
+    return re.sub(r"[^a-z0-9]+", "-", t.lower()).strip("-")
+
+CHAPTERS = [(s["id"], s["short"], s["kicker"]) for s in R["sections"]] + [("summary", "Community summary", "Share it")]
+CH_IDS = [c[0] for c in CHAPTERS]
+CH_TITLE = {c[0]: c[1] for c in CHAPTERS}
+CH_SLUG = {cid: slug(t) for cid, t, _ in CHAPTERS}
+
+def chapter_url(cid):
+    return f"/chapters/{CH_SLUG[cid]}"
 
 def chapter_top(cid):
-    ch = chapters(); i = [c[0] for c in ch].index(cid) + 1
-    return (f'<div class="chap-top"><a class="chap-all" href="#chapters">{ICON["left"]}All chapters</a>'
-            f'<span class="chap-of">Chapter {i} of {len(ch)}</span>'
-            f'<span class="chap-meter" aria-hidden="true"><span style="width:{i / len(ch) * 100:.1f}%"></span></span></div>')
+    i = CH_IDS.index(cid) + 1
+    return (f'<div class="chap-top"><a class="chap-all" href="/#chapters">{ICON["left"]}All chapters</a>'
+            f'<span class="chap-of">Chapter {i} of {len(CHAPTERS)}</span>'
+            f'<span class="chap-meter" aria-hidden="true"><span style="width:{i / len(CHAPTERS) * 100:.1f}%"></span></span></div>')
+
+def neighbours(cid):
+    """(href, label) for the previous and next stop: the home page before chapter 1, the source list after the last."""
+    i = CH_IDS.index(cid)
+    prev = (chapter_url(CH_IDS[i - 1]), CH_TITLE[CH_IDS[i - 1]]) if i > 0 else ("/#chapters", "Key findings and chapters")
+    nxt = (chapter_url(CH_IDS[i + 1]), CH_TITLE[CH_IDS[i + 1]]) if i + 1 < len(CH_IDS) else ("/sources", "Source list")
+    return prev, nxt
 
 def chapter_nav(cid):
-    ch = chapters(); ids = [c[0] for c in ch]; i = ids.index(cid)
-    prev = (f'<a class="chap-prev" href="#{ch[i - 1][0]}" rel="prev"><span class="dir">{ICON["left"]}Previous</span><span class="t">{esc(ch[i - 1][1])}</span></a>'
-            if i > 0 else f'<a class="chap-prev" href="#chapters" rel="prev"><span class="dir">{ICON["left"]}Back to</span><span class="t">Key findings and chapters</span></a>')
-    nxt = (f'<a class="chap-next" href="#{ch[i + 1][0]}" rel="next"><span class="dir">Next{ICON["right"]}</span><span class="t">{esc(ch[i + 1][1])}</span></a>'
-           if i + 1 < len(ch) else f'<a class="chap-next" href="sources.html" rel="next"><span class="dir">Next{ICON["right"]}</span><span class="t">Source list</span></a>')
-    return f'<nav class="chap-nav" aria-label="Chapters">{prev}{nxt}</nav>'
+    (ph, pt), (nh, nt) = neighbours(cid)
+    first, last = CH_IDS.index(cid) == 0, CH_IDS.index(cid) == len(CH_IDS) - 1
+    return (f'<nav class="chap-nav" aria-label="Chapters">'
+            f'<a class="chap-prev" href="{ph}" rel="prev"><span class="dir">{ICON["left"]}{"Back to" if first else "Previous"}</span><span class="t">{esc(pt)}</span></a>'
+            f'<a class="chap-next" href="{nh}" rel="next"><span class="dir">{"Then" if last else "Next"}{ICON["right"]}</span><span class="t">{esc(nt)}</span></a></nav>')
 
 def words_in(html):
     return len(re.sub(r"<[^>]+>", " ", html).split())
 
 def chapters_html(bodies):
-    ch = chapters(); cards = ""
-    for i, (cid, title, kicker) in enumerate(ch, 1):
+    cards = ""
+    for i, (cid, title, kicker) in enumerate(CHAPTERS, 1):
         mins = max(1, round(words_in(bodies[cid]) / 220))
-        cards += (f'<li><a class="chap-card rv" href="#{cid}"><span class="cn">{nn(i)}</span><span class="ck">{esc(kicker)}</span>'
+        cards += (f'<li><a class="chap-card rv" href="{chapter_url(cid)}"><span class="cn">{nn(i)}</span><span class="ck">{esc(kicker)}</span>'
                   f'<span class="ct">{esc(title)}</span><span class="cm">{mins} min read{ICON["right"]}</span></a></li>')
     return (f'<section class="s chapters" id="chapters" aria-labelledby="h-chapters"><div class="rv"><p class="kicker"><span class="bar"></span>Read it in parts</p>'
-            f'<h2 id="h-chapters">Chapters</h2><p class="intro">The full report in {len(ch)} short chapters. Open one, then use Next and Previous at the end of each.</p></div>'
+            f'<h2 id="h-chapters">Chapters</h2><p class="intro">The full report in {len(CHAPTERS)} short chapters, each on its own page. Open one, then use Next and Previous at the end of each.</p></div>'
             f'<ol class="chap-grid">{cards}</ol></section>')
 
 def section_html(s, mode):
     i = SEC_NUM[s["id"]]
     h = (f'<section class="s" id="{s["id"]}" aria-labelledby="h-{s["id"]}">' + (chapter_top(s["id"]) if mode == "web" else "") + '<div class="rv"><p class="kicker"><span class="bar"></span>'
-         f'<span class="num">{nn(i)}</span>{esc(s["kicker"])}</p><h2 id="h-{s["id"]}">{esc(strip_num(s["title"]))}</h2>')
+         f'<span class="num">{nn(i)}</span>{esc(s["kicker"])}</p>{"<h1" if mode == "web" else "<h2"} id="h-{s["id"]}">{esc(strip_num(s["title"]))}{"</h1>" if mode == "web" else "</h2>"}')
     if s.get("intro"):
         h += f'<p class="intro">{rich(s["intro"], mode)}</p>'
     h += "</div>"
@@ -271,8 +287,9 @@ def post_count(t):
 def summary_html(mode):
     cs = R["community_summary"]; n = len(R["sections"]) + 1
     paras = "".join(f'<p class="sum-p" data-raw="{esc(p)}">{esc(p)}</p>' for p in cs["paragraphs"])
+    tag = "h1" if mode == "web" else "h2"
     h = (f'<section class="s" id="summary" aria-labelledby="h-summary">' + (chapter_top("summary") if mode == "web" else "") + f'<div class="rv"><p class="kicker"><span class="bar"></span><span class="num">{nn(n)}</span>Share it</p>'
-         f'<h2 id="h-summary">Community summary</h2><p class="intro">Plain language, ready for the DAO to share. Copy the paragraphs, a single post, or the whole thread.</p></div>')
+         f'<{tag} id="h-summary">Community summary</{tag}><p class="intro">Plain language, ready for the DAO to share. Copy the paragraphs, a single post, or the whole thread.</p></div>')
     btn = lambda attrs, label, msg, extra="": (f'<button class="copy{extra}" type="button" {attrs} data-msg="{msg}">{ICON["copy"]}<span class="lbl">{label}</span></button>')
     h += (f'<div class="share rv"><div class="shead"><h3>A few paragraphs</h3>' +
           ("" if mode == "print" else btn('data-copy=".sum-p"', "Copy summary", "Summary copied", " primary")) + f'</div><div class="body">{paras}</div></div>')
@@ -288,61 +305,81 @@ def summary_html(mode):
 # ---------- shared page parts ----------
 CSS_V = "?v=" + __import__("hashlib").sha256((ROOT / "scripts/site.css").read_bytes() + (ROOT / "scripts/site.js").read_bytes()).hexdigest()[:10]
 
-def head(title, desc):
+def head(title, desc, path, extra=""):
+    url = SITE + path
     return (f'<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<title>{esc(title)}</title><meta name="description" content="{esc(desc)}"><meta name="theme-color" content="#0c1317">'
-            f'<meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(desc)}"><meta property="og:type" content="article">'
-            f'<link rel="icon" href="brand/dao-logo-on-dark.png"><link rel="preload" href="fonts/be-vietnam-pro-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>'
-            f'<link rel="stylesheet" href="site.css{CSS_V}"></head>')
+            f'<link rel="canonical" href="{url}"><meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(desc)}">'
+            f'<meta property="og:type" content="article"><meta property="og:url" content="{url}"><meta property="og:site_name" content="Redbelly DAO community research">'
+            f'<link rel="icon" type="image/png" sizes="32x32" href="/brand/icon-32.png"><link rel="icon" type="image/png" sizes="512x512" href="/brand/icon.png">'
+            f'<link rel="apple-touch-icon" href="/brand/icon-180.png">'
+            f'<link rel="preload" href="/fonts/be-vietnam-pro-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>'
+            f'<link rel="stylesheet" href="/site.css{CSS_V}">{extra}</head>')
 
 def header(current):
     def link(href, label, key):
         cur = ' aria-current="page"' if key == current else ""
         return f'<a href="{href}"{cur}>{label}</a>'
-    return ('<div class="progress" aria-hidden="true"><span></span></div>'
-            '<header class="top"><a class="brand" href="index.html"><img src="brand/dao-logo-on-dark.png" alt="Redbelly DAO" width="62" height="44"></a>'
-            f'<nav aria-label="Pages">{link("index.html", "Report", "report")}{link("sources.html", "Sources", "sources")}</nav></header>')
+    return ('<a class="skip" href="#main">Skip to content</a><div class="progress" aria-hidden="true"><span></span></div>'
+            '<header class="top"><a class="brand" href="/"><img src="/brand/dao-logo-on-dark.png" alt="Redbelly DAO, home" width="62" height="44"></a>'
+            f'<nav aria-label="Pages">{link("/", "Report", "report")}{link("/sources", "Sources", "sources")}</nav></header>')
 
-def toc_html(items, extra_links):
-    lis = "".join(f'<li><a href="#{i}" data-t="{i}"><span class="n">{n}</span><span>{esc(t)}</span></a></li>' for i, n, t in items)
+def toc_html(items, extra_links, head_text):
+    lis = "".join(f'<li><a class="rn-item" href="#{i}" data-t="{i}"><span class="rn-l">{n}</span><span class="rn-t">{esc(t)}</span></a></li>' for i, n, t in items)
     chips = "".join(f'<li><a href="#{i}" data-t="{i}"><span class="n">{n}</span>{esc(t)}</a></li>' for i, n, t in items)
-    return (f'<aside class="toc" aria-label="On this page"><p class="toc-head">On this page</p><div class="toc-track"><span class="toc-fill"></span><span class="toc-ind"></span><ol>{lis}</ol></div>'
-            f'<div class="toc-links">{extra_links}</div></aside>', f'<nav class="chips" aria-label="On this page"><ol>{chips}</ol></nav>')
+    return (f'<aside class="toc rnav" aria-label="{esc(head_text)}"><p class="toc-head">{esc(head_text)}</p><ol class="rn">{lis}</ol>'
+            f'<div class="toc-links">{extra_links}</div></aside>', f'<nav class="chips" aria-label="{esc(head_text)}"><ol>{chips}</ol></nav>')
 
 def foot():
     return ('<footer class="foot"><div><p>Feasibility research only. Redbelly and Quant have no announced partnership or talks, and nothing on this site suggests otherwise.</p>'
             f'<p>Sources last verified {VERIFIED}. Every claim links to the source list; page snapshots, tests and the check script are in the project repository that came with this report.</p></div>'
-            '<div><p>Fonts: Be Vietnam Pro and JetBrains Mono, SIL Open Font License 1.1. Logo: Redbelly DAO, from the Task Board brand kit.</p>'
-            '<p>Diagrams drawn for this report. No third-party images or icons.</p></div></footer>')
+            '<div><p>Fonts: Be Vietnam Pro and JetBrains Mono, SIL Open Font License 1.1. Logo and icon: Redbelly DAO, from the Task Board brand kit.</p>'
+            '<p>Diagrams drawn for this report. No third-party images.</p></div></footer>')
 
-def report_nav():
-    """Side menu of the report: two entries, Key findings and Chapters, with the chapters as a sub list."""
-    ch = chapters()
-    subs = "".join(f'<li><a href="#{cid}" data-t="{cid}"><span class="n">{nn(i)}</span><span>{esc(t)}</span></a></li>' for i, (cid, t, _) in enumerate(ch, 1))
+DOWNLOADS = (f'<a href="/downloads/{PDF_NAME}">{ICON["pdf"]}Download PDF</a><a href="/downloads/{DOCX_NAME}">{ICON["doc"]}Word file</a>'
+             f'<a href="/sources">{ICON["list"]}Source list</a>')
+
+def report_nav(active):
+    """Side menu: two entries, Key findings and Chapters, with the chapters as a sub list.
+    active is 'home' on the home page, or a chapter id on a chapter page."""
+    on_home = active == "home"
+    subs = ""
+    for i, (cid, t, _) in enumerate(CHAPTERS, 1):
+        cur = ' class="active" aria-current="page"' if cid == active else ""
+        subs += f'<li><a href="{chapter_url(cid)}"{cur}><span class="n">{nn(i)}</span><span>{esc(t)}</span></a></li>'
+    fhref, chref = ("#findings", "#chapters") if on_home else ("/#findings", "/#chapters")
+    open_cls = "" if on_home else " open"
     return (f'<aside class="toc rnav" aria-label="Report contents"><p class="toc-head">Report</p><ol class="rn">'
-            f'<li><a class="rn-item" href="#findings" data-t="findings"><span class="rn-l">A</span><span class="rn-t">Key findings</span></a></li>'
-            f'<li class="rn-group open"><div class="rn-row"><a class="rn-item" href="#chapters" data-t="chapters"><span class="rn-l">B</span><span class="rn-t">Chapters</span>'
-            f'<span class="cnt">{len(ch)}</span></a><button class="rn-tog" type="button" aria-expanded="true" aria-controls="rn-sub" aria-label="Show or hide the chapters">{ICON["chev"]}</button></div>'
+            f'<li><a class="rn-item" href="{fhref}" data-t="findings"><span class="rn-l">A</span><span class="rn-t">Key findings</span></a></li>'
+            f'<li class="rn-group{open_cls}"><div class="rn-row"><a class="rn-item{"" if on_home else " here"}" href="{chref}" data-t="chapters"><span class="rn-l">B</span><span class="rn-t">Chapters</span>'
+            f'<span class="cnt">{len(CHAPTERS)}</span></a><button class="rn-tog" type="button" aria-expanded="{"false" if on_home else "true"}" aria-controls="rn-sub" aria-label="Show or hide the chapters">{ICON["chev"]}</button></div>'
             f'<div class="rn-subw" id="rn-sub"><ol class="rn-sub">{subs}</ol></div></li></ol>'
-            f'<div class="toc-links"><a href="downloads/{PDF_NAME}">{ICON["pdf"]}Download PDF</a><a href="downloads/{DOCX_NAME}">{ICON["doc"]}Word file</a><a href="sources.html">{ICON["list"]}Source list</a></div></aside>')
+            f'<div class="toc-links">{DOWNLOADS}</div></aside>')
 
-def dock_report():
-    ch = chapters()
-    sheet = "".join(f'<li><a href="#{cid}"><span class="n">{nn(i)}</span>{esc(t)}</a></li>' for i, (cid, t, _) in enumerate(ch, 1))
-    return ('<nav class="dock" aria-label="Quick navigation">'
-            f'<a class="dk dk-home" href="#findings">{ICON["home"]}<span class="dl">Findings</span></a>'
-            f'<button class="dk dk-chap" type="button" aria-expanded="false" aria-controls="sheet">{ICON["list"]}<span class="dl">Chapters</span></button>'
-            f'<span class="dk-mid" hidden><a class="dk dk-prev" href="#findings" aria-label="Previous chapter">{ICON["left"]}</a><span class="dk-pos"></span>'
-            f'<a class="dk dk-next" href="#findings" aria-label="Next chapter">{ICON["right"]}</a></span>'
-            f'<span class="dk-sep" aria-hidden="true"></span><a class="dk dk-src" href="sources.html">{ICON["repo"]}<span class="dl">Sources</span></a>'
-            f'<button class="dk dk-top" type="button" aria-label="Back to top">{ICON["up"]}</button></nav>'
-            f'<div class="sheet" id="sheet" hidden><p class="sh-head">Chapters</p><ol>{sheet}</ol></div>'
+def chapter_sheet(active):
+    items = "".join(f'<li><a href="{chapter_url(cid)}"{" class=\"active\" aria-current=\"page\"" if cid == active else ""}><span class="n">{nn(i)}</span>{esc(t)}</a></li>'
+                    for i, (cid, t, _) in enumerate(CHAPTERS, 1))
+    return f'<div class="sheet" id="sheet" hidden><p class="sh-head">Chapters</p><ol>{items}</ol></div>'
+
+def dock(active):
+    """Bottom bar. Home: Findings, Chapters, Sources, Top. Chapter: Chapters, previous, position, next, Sources, Top."""
+    chap = f'<button class="dk dk-chap" type="button" aria-expanded="false" aria-controls="sheet">{ICON["list"]}<span class="dl">Chapters</span></button>'
+    src = f'<span class="dk-sep" aria-hidden="true"></span><a class="dk dk-src" href="/sources">{ICON["repo"]}<span class="dl">Sources</span></a>'
+    top = f'<button class="dk dk-top" type="button" aria-label="Back to top">{ICON["up"]}</button>'
+    if active == "home":
+        mid = f'<a class="dk dk-home" href="#findings">{ICON["home"]}<span class="dl">Findings</span></a>' + chap
+    else:
+        (ph, _), (nh, nt) = neighbours(active)
+        i = CH_IDS.index(active) + 1
+        mid = (chap + f'<span class="dk-mid"><a class="dk dk-prev" href="{ph}" aria-label="Previous">{ICON["left"]}</a>'
+               f'<span class="dk-pos">{i} / {len(CHAPTERS)}</span><a class="dk dk-next" href="{nh}" aria-label="Next: {esc(nt)}">{ICON["right"]}</a></span>')
+    return (f'<nav class="dock" aria-label="Quick navigation">{mid}{src}{top}</nav>' + chapter_sheet(active) +
             '<div class="toast" role="status" aria-live="polite"></div>')
 
 def dock_sources():
     return ('<nav class="dock" aria-label="Quick navigation">'
-            f'<a class="dk" href="index.html">{ICON["left"]}<span class="dl">Back to the report</span></a><span class="dk-sep" aria-hidden="true"></span>'
-            f'<a class="dk" href="#main">{ICON["search"]}<span class="dl">Filter</span></a>'
+            f'<a class="dk" href="/">{ICON["left"]}<span class="dl">Back to the report</span></a><span class="dk-sep" aria-hidden="true"></span>'
+            f'<a class="dk dk-find" href="#q">{ICON["search"]}<span class="dl">Filter</span></a>'
             f'<button class="dk dk-top" type="button" aria-label="Back to top">{ICON["up"]}</button></nav>'
             '<div class="toast" role="status" aria-live="polite"></div>')
 
@@ -354,29 +391,62 @@ HERO_ART = ('<svg class="hero-art" viewBox="0 0 300 220" aria-hidden="true" focu
             '<circle cx="200" cy="70" r="9" fill="#1d3140" stroke="#EF5350" stroke-width="2"/><circle cx="170" cy="120" r="9" fill="#1d3140" stroke="#8fa1ad" stroke-width="1.5" stroke-dasharray="3 3"/>'
             '</svg>')
 
-def cite_data():
-    return json.dumps({"sources": {str(NUM[s]): {"p": SOURCES[s]["publisher"], "t": SOURCES[s]["title"]} for s in ORDER},
-                       "facts": {f: FACTS[f]["quote"] for f in sorted(USED)}}, ensure_ascii=False).replace("</", "<\\/")
+def cite_data(page_html):
+    """Source titles and quoted words for the citation previews, limited to what the page cites."""
+    nums = sorted({int(n) for n in re.findall(r'data-n="(\d+)"', page_html)})
+    fids = sorted({f for grp in re.findall(r'data-f="([^"]+)"', page_html) for f in grp.split()})
+    by_num = {NUM[s]: s for s in ORDER}
+    return json.dumps({"sources": {str(n): {"p": SOURCES[by_num[n]]["publisher"], "t": SOURCES[by_num[n]]["title"]} for n in nums},
+                       "facts": {f: FACTS[f]["quote"] for f in fids}}, ensure_ascii=False).replace("</", "<\\/")
 
-def report_page():
-    bodies = {s["id"]: section_html(s, "web") for s in R["sections"]}
-    bodies["summary"] = summary_html("web")
+VIEWER = ('<div class="viewer" aria-hidden="true" role="dialog" aria-label="Figure, full screen"><button class="close" type="button" aria-label="Close">'
+          + ICON["close"] + '</button><div class="vin"></div></div>')
+
+def page(title, desc, path, current, inner, tail, extra_head=""):
+    js = f'<script src="/site.js{CSS_V}"></script>'
+    data = f'<script type="application/json" id="cite-data">{cite_data(inner)}</script>' if 'class="cite"' in inner else ""
+    viewer = VIEWER if 'class="zoom"' in inner else ""
+    return (head(title, desc, path, extra_head) + "<body>" + header(current) + f'<main id="main" tabindex="-1">{inner}</main>' +
+            viewer + tail + data + js + "</body></html>")
+
+def chapter_bodies():
+    b = {s["id"]: section_html(s, "web") for s in R["sections"]}
+    b["summary"] = summary_html("web")
+    return b
+
+def home_page(bodies):
     nsrc, nfacts = len(ORDER), len(USED)
     hero = (f'<section class="hero" aria-labelledby="title">{HERO_ART}<p class="kicker"><span class="bar"></span>Redbelly DAO community research</p>'
             f'<h1 id="title">{esc(R["title"])}</h1><p class="lead">{esc(R["subtitle"])}. What Overledger is, whether Redbelly can reach it, what that would take, and where compliance could break.</p>'
             f'<div class="notice">{ICON["info"]}<p>{rich(R["status_note"])}</p></div>'
-            f'<p class="meta-row"><span>Last verified <b>{VERIFIED}</b></span><span><b>{nsrc}</b> sources</span><span><b>{nfacts}</b> quoted facts</span><span><b>{len(FIGNUM)}</b> diagrams</span></p>'
-            f'<div class="actions"><a class="btn primary" href="downloads/{PDF_NAME}">{ICON["pdf"]}Download PDF</a>'
-            f'<a class="btn" href="downloads/{DOCX_NAME}">{ICON["doc"]}Word file</a><a class="btn" href="#summary">{ICON["chat"]}Community summary</a>'
-            f'<a class="btn" href="sources.html">{ICON["list"]}Source list</a></div></section>')
+            f'<p class="meta-row"><span>Last verified <b>{VERIFIED}</b></span><span><b>{nsrc}</b> sources</span><span><b>{nfacts}</b> quoted facts</span><span><b>{len(FIGNUM)}</b> diagrams</span><span><b>{len(CHAPTERS)}</b> chapters</span></p>'
+            f'<div class="actions"><a class="btn primary" href="{chapter_url(CH_IDS[0])}">{ICON["right"]}Start reading</a>'
+            f'<a class="btn" href="/downloads/{PDF_NAME}">{ICON["pdf"]}Download PDF</a><a class="btn" href="/downloads/{DOCX_NAME}">{ICON["doc"]}Word file</a>'
+            f'<a class="btn" href="{chapter_url("summary")}">{ICON["chat"]}Community summary</a><a class="btn" href="/sources">{ICON["list"]}Source list</a></div></section>')
     legend = ('<div class="card rv legend-card"><div class="chead"><h3>How to read the labels</h3></div><ul class="legend">' +
               "".join(f'<li>{pill(k)}<span>{esc(v)}</span></li>' for k, v in R["labels"].items()) + "</ul></div>")
-    body = (findings_html("web") + legend + chapters_html(bodies) +
-            "".join(bodies[s["id"]] for s in R["sections"]) + bodies["summary"])
-    return (head(R["title"] + " | Redbelly DAO research", R["subtitle"]) + "<body>" + header("report") +
-            f'<main id="main">{hero}<div class="layout">{report_nav()}<div class="content">{body}{foot()}</div></div></main>' +
-            '<div class="viewer" aria-hidden="true" role="dialog" aria-label="Figure, full screen"><button class="close" type="button" aria-label="Close">' + ICON["close"] + '</button><div class="vin"></div></div>' +
-            dock_report() + f'<script type="application/json" id="cite-data">{cite_data()}</script><script src="site.js{CSS_V}"></script></body></html>')
+    inner = (f'{hero}<div class="layout">{report_nav("home")}<div class="content">' +
+             findings_html("web") + legend + chapters_html(bodies) + foot() + "</div></div>")
+    first = chapter_url(CH_IDS[0])
+    return page(R["title"] + " | Redbelly DAO research", R["subtitle"], "/", "report", inner, dock("home"),
+                f'<link rel="prefetch" href="{first}">')
+
+def chapter_page(cid, body):
+    i = CH_IDS.index(cid) + 1
+    (ph, _), (nh, _) = neighbours(cid)
+    title = f"{i}. {CH_TITLE[cid]} | {R['title']}"
+    s = SEC.get(cid)
+    desc = re.sub(r"\s*\{[^}]+\}", "", s["intro"]) if s and s.get("intro") else f"Chapter {i} of {len(CHAPTERS)} of the feasibility report: {R['subtitle']}."
+    inner = (f'<div class="layout">{report_nav(cid)}<div class="content chapter">{body}{foot()}</div></div>')
+    extra = f'<link rel="prev" href="{ph}"><link rel="next" href="{nh}"><link rel="prefetch" href="{nh}">'
+    return page(title, desc, chapter_url(cid), "report", inner, dock(cid), extra)
+
+def not_found_page():
+    inner = (f'<section class="hero" aria-labelledby="title">{HERO_ART}<p class="kicker"><span class="bar"></span>Page not found</p>'
+             f'<h1 id="title">That page is not part of this report</h1><p class="lead">The address may be mistyped, or it may point to an older version of the site.</p>'
+             f'<div class="actions"><a class="btn primary" href="/">{ICON["home"]}Key findings</a><a class="btn" href="/#chapters">{ICON["list"]}All chapters</a>'
+             f'<a class="btn" href="/sources">{ICON["repo"]}Source list</a></div></section>')
+    return page("Page not found | " + R["title"], "This page is not part of the report.", "/404", "", inner, "")
 
 def snapshot_info(s):
     import hashlib
@@ -388,6 +458,13 @@ def snapshot_info(s):
     when = (m["captured_utc"].replace("T", " ").replace("Z", " UTC")) if m else ""
     return str(rel), sha, when
 
+def used_href(w):
+    if w == "top":
+        return "/"
+    if w == "findings":
+        return "/#findings"
+    return chapter_url(w)
+
 def sources_page():
     items, groups = [], []
     for gid, gname, _ in GROUPS:
@@ -395,21 +472,21 @@ def sources_page():
         srcs.sort(key=lambda s: NUM[s])
         if srcs:
             items.append((gid, nn(len(items) + 1), gname)); groups.append((gid, gname, srcs))
-    toc, chips = toc_html(items, f'<a href="index.html">{ICON["left"]}Back to the report</a><a href="downloads/SOURCES.md">{ICON["doc"]}Source list as Markdown</a>')
+    toc, chips = toc_html(items, f'<a href="/">{ICON["left"]}Back to the report</a><a href="/downloads/SOURCES.md">{ICON["doc"]}Source list as Markdown</a>', "Sources")
     hero = (f'<section class="hero" aria-labelledby="title"><p class="kicker"><span class="bar"></span>Source list</p><h1 id="title">Where every fact comes from</h1>'
             f'<p class="lead">The report cites each source as S1, S2 and so on. Under each one are the exact words the report relies on, so you can find them on the page with Ctrl+F, and links back to where each is used.</p>'
             f'<div class="notice">{ICON["info"]}<p>A text copy of every page as it read on {VERIFIED} is kept in the project repository under evidence/snapshots, with its SHA-256 in evidence/manifest.json. The check script fails if any quote is missing from its copy.</p></div>'
             f'<p class="meta-row"><span><b>{len(ORDER)}</b> sources</span><span><b>{len(USED)}</b> quoted facts</span><span>Last verified <b>{VERIFIED}</b></span></p>'
-            f'<div class="actions"><a class="btn primary" href="index.html">{ICON["left"]}Back to the report</a><a class="btn" href="downloads/{PDF_NAME}">{ICON["pdf"]}Download PDF</a>'
-            f'<a class="btn" href="downloads/SOURCES.md">{ICON["doc"]}Source list as Markdown</a></div></section>')
+            f'<div class="actions"><a class="btn primary" href="/">{ICON["left"]}Back to the report</a><a class="btn" href="/downloads/{PDF_NAME}">{ICON["pdf"]}Download PDF</a>'
+            f'<a class="btn" href="/downloads/SOURCES.md">{ICON["doc"]}Source list as Markdown</a></div></section>')
     body = (f'<div class="filter rv">{ICON["search"]}<label class="sr" for="q">Filter sources</label><input id="q" type="search" placeholder="Filter by publisher, title or quoted words" autocomplete="off">'
-            f'<span class="fc">{len(ORDER)} of {len(ORDER)} sources</span></div><p class="empty">No source matches that filter.</p>')
+            f'<span class="fc" aria-live="polite">{len(ORDER)} of {len(ORDER)} sources</span></div><p class="empty">No source matches that filter.</p>')
     for gid, gname, srcs in groups:
         body += f'<section class="group" id="{gid}"><h2>{esc(gname)}<span class="gn">{len(srcs)} {"source" if len(srcs) == 1 else "sources"}</span></h2>'
         for sid in srcs:
             s = SOURCES[sid]; n = NUM[sid]
             if s.get("local"):
-                url = f'<a class="su" href="{esc(s["url"])}">{esc(s["url"])}</a>'
+                url = f'<a class="su" href="/{esc(s["url"])}">{esc(s["url"])}</a>'
             else:
                 url = f'<a class="su" href="{esc(s["url"])}" target="_blank" rel="noopener">{esc(s["url"])}</a>'
             rel, sha, when = snapshot_info(s)
@@ -417,14 +494,14 @@ def sources_page():
                      f'<p class="st">{esc(s["title"])}</p>{url}</div></div>'
                      f'<p class="snap">Saved copy: {esc(rel)} · captured {esc(when)} · SHA-256 {sha[:12]}…{sha[-6:]}</p><ul class="qs">')
             for f in (f for f in FACTS.values() if f["source"] == sid and f["id"] in USED):
-                used = ", ".join(f'<a href="index.html#{where_label(w)[1]}">{esc(where_label(w)[0])}</a>' for w in USED_IN[f["id"]])
+                used = ", ".join(f'<a href="{used_href(w)}">{esc(where_label(w)[0])}</a>' for w in USED_IN[f["id"]])
                 body += (f'<li><div><q>{esc(f["quote"])}</q><span class="used">Used in {used}</span></div>'
                          f'<button class="copy" type="button" data-text="{esc(f["quote"])}" data-msg="Quote copied" aria-label="Copy this quote">{ICON["copy"]}<span class="lbl">Copy</span></button></li>')
             body += "</ul></article>"
         body += "</section>"
-    return (head("Source list | " + R["title"], "Every source behind the Overledger and Redbelly feasibility report, with the exact words relied on.") +
-            "<body>" + header("sources") + f'<main id="main">{hero}<div class="layout">{toc}<div class="content">{chips}{body}{foot()}</div></div></main>' +
-            dock_sources() + f'<script src="site.js{CSS_V}"></script></body></html>')
+    inner = f'{hero}<div class="layout">{toc}<div class="content">{chips}{body}{foot()}</div></div>'
+    return page("Source list | " + R["title"], "Every source behind the Overledger and Redbelly feasibility report, with the exact words relied on.",
+                "/sources", "sources", inner, dock_sources())
 
 # ---------- print version for the PDF ----------
 def drop_small_screen_rules(css):
@@ -547,6 +624,11 @@ def build_docx(path, pngs):
         for f in FACTS.values():
             if f["source"] == sid and f["id"] in USED:
                 d.add_paragraph("“" + f["quote"] + "”", style="List Bullet")
+    cp = d.core_properties
+    cp.title = R["title"]; cp.subject = R["subtitle"]; cp.author = "Redbelly DAO community research"
+    cp.last_modified_by = "Redbelly DAO community research"; cp.comments = ""; cp.keywords = "Redbelly, Overledger, feasibility"
+    from datetime import datetime, timezone
+    cp.created = cp.modified = datetime(2026, 10, 15, tzinfo=timezone.utc); cp.revision = 1
     d.save(path)
 
 # ---------- Markdown ----------
@@ -576,8 +658,11 @@ def prepare_assets():
     (PUB / "evidence/tests").mkdir(parents=True, exist_ok=True)
     for f in (ROOT / "evidence/tests").glob("*.txt"):
         shutil.copy(f, PUB / "evidence/tests" / f.name)
-    logo = PUB / "brand/dao-logo-on-dark.png"
     from PIL import Image
+    icon = PUB / "brand/icon.png"
+    for size, name in ((32, "icon-32.png"), (180, "icon-180.png")):
+        Image.open(icon).convert("RGBA").resize((size, size), Image.LANCZOS).save(PUB / "brand" / name, optimize=True)
+    logo = PUB / "brand/dao-logo-on-dark.png"
     im = Image.open(logo)
     if im.height > 200:
         im = im.convert("RGBA"); w = round(im.width * 176 / im.height)
@@ -586,8 +671,14 @@ def prepare_assets():
 def main():
     (PUB / "downloads").mkdir(parents=True, exist_ok=True); (ROOT / "build").mkdir(exist_ok=True)
     prepare_assets()
-    (PUB / "index.html").write_text(report_page())
+    bodies = chapter_bodies()
+    (PUB / "index.html").write_text(home_page(bodies))
+    chap_dir = PUB / "chapters"
+    shutil.rmtree(chap_dir, ignore_errors=True); chap_dir.mkdir()
+    for cid in CH_IDS:
+        (chap_dir / f"{CH_SLUG[cid]}.html").write_text(chapter_page(cid, bodies[cid]))
     (PUB / "sources.html").write_text(sources_page())
+    (PUB / "404.html").write_text(not_found_page())
     (ROOT / "build/print.html").write_text(print_page())
     from playwright.sync_api import sync_playwright
     with sync_playwright() as p:

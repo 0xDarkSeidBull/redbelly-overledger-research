@@ -58,9 +58,8 @@
 <rect x="16" y="370" width="928" height="246" rx="6" fill="#0c1317" stroke="#223039" stroke-width="1.5"/>
 <rect x="40" y="400" width="18" height="4" rx="2" fill="#EF5350"/>
 <text x="66" y="408" font-family="JetBrains Mono, monospace" font-size="15" font-weight="500" letter-spacing="1.5" fill="#8fa1ad">BREAK POINTS</text>
-<rect x="206" y="390" width="128" height="26" rx="13" fill="none" stroke="#FCD34D" stroke-width="1.5"/>
-<circle cx="223.6" cy="403.0" r="3.4" fill="#FCD34D"/>
-<text x="237" y="408" font-family="JetBrains Mono, monospace" font-size="15" font-weight="500" letter-spacing="1.2" fill="#FCD34D">ANALYSIS</text>
+<circle cx="210.5" cy="403.0" r="4" fill="#FCD34D"/>
+<text x="221" y="408" font-family="JetBrains Mono, monospace" font-size="15" font-weight="500" letter-spacing="1.2" fill="#FCD34D">ANALYSIS</text>
 <circle cx="54" cy="455.0" r="12" fill="#EF5350"/>
 <text x="54" y="460.3" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" font-weight="500" fill="#ffffff">1</text>
 <text x="78" y="460.6" font-family="Be Vietnam Pro, sans-serif" font-size="16" font-weight="400" fill="#c2ced6">Copy without eligibility checks</text>

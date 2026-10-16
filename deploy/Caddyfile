@@ -1,5 +1,0 @@
-overledger.test-hub.xyz {
-	root * /var/www/redbelly-overledger-research/public
-	encode gzip
-	file_server
-}

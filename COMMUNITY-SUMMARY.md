@@ -24,4 +24,4 @@ Open questions: whether Overledger would treat Redbelly as self-serve, whether R
 
 5/ Receptor credentials and Tokeniser rules do not travel with a token to another chain. A copy elsewhere follows only that chain's rules. Keeping regulated assets on Redbelly avoids the gap.
 
-6/ Still unknown: whether Overledger would treat Redbelly as self-serve, since writing needs a credential, which chains The Clearing House network will reach, and Redbelly's position on bridging. Full report with every source: https://overledger.test-hub.xyz
+6/ Still unknown: whether Overledger would treat Redbelly as self-serve, since writing needs a credential, which chains The Clearing House network will reach, and Redbelly's position on bridging. Full report with every source: https://overledger.vercel.app
