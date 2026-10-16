@@ -50,8 +50,8 @@ def local_list(name):
 def redact(text):
     """Removes personal credit from a copy and says so under its title."""
     names = links = 0
-    for n in local_list(".credit-names"):
-        text, k = re.subn(re.escape(n), "[name removed]", text, flags=re.I); names += k
+    for n in sorted(local_list(".credit-names"), key=len, reverse=True):
+        text, k = re.subn(r"[\w.-]*" + re.escape(n) + r"[\w.-]*", "[name removed]", text, flags=re.I); names += k
     for host in local_list(".credit-links"):
         text, k = re.subn(r"(?:https?://)?[\w.-]*" + re.escape(host) + r"[^\s)\]]*", "[link removed]", text); links += k
     if names or links:
@@ -62,6 +62,8 @@ def redact(text):
     return text
 
 def main():
+    if not (local_list(".credit-names") and local_list(".credit-links")):
+        raise SystemExit("refusing to capture: .credit-names and .credit-links are needed to remove personal credit from the copies")
     from playwright.sync_api import sync_playwright
     sources = [s for s in json.loads((ROOT / "content/sources.json").read_text()) if not s.get("local")]
     with sync_playwright() as p:

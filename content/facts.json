@@ -397,7 +397,7 @@
  {
   "id": "t-blocks",
   "source": "test-rpc",
-  "quote": "eth_getBlockByNumber -> {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{"
+  "quote": "eth_getBlockByNumber -> {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"baseFeePerGas\":\"0xe0fbb4df40c0\""
  },
  {
   "id": "t-ol-auth",

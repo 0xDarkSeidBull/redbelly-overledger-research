@@ -4,7 +4,7 @@ html, body.print { background: #fff; }
 body.print { color: #0c1317; font-size: 10.4pt; line-height: 1.55; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .print main { max-width: none; padding: 0; }
 .print .toc, .print .chips, .print .to-top, .print .page-switch, .print .copy, .print .zoom, .print .toast, .print .viewer, .print .progress, .print .hero-art, .print .actions { display: none !important; }
-.print .hero { border-radius: 10px; padding: 26px 28px 22px; margin: 0 0 16px; color: var(--text); }
+.print .hero { border-radius: 8px; padding: 26px 28px 22px; margin: 0 0 16px; color: var(--text); }
 .print .hero .notice p { margin: 0; }
 .print .hero::before { display: none; }
 .print .plogo { height: 38px; width: auto; display: block; margin: 0 0 16px; }
@@ -13,10 +13,10 @@ body.print { color: #0c1317; font-size: 10.4pt; line-height: 1.55; -webkit-print
 .print .notice { font-size: 10pt; margin-bottom: 12px; }
 .print .meta-row { margin: 0; font-size: 8.5pt; }
 .print .kicker { color: #5b6b76; }
-.print .kicker .num { color: #c62828; }
+.print .kicker .num { color: #B3272A; }
 .print .hero .kicker { color: #c2ced6; }
 .print .hero .kicker .num { color: var(--accent-text); }
-.print a { color: #b3261e; }
+.print a { color: #B3272A; }
 .print section.s { padding: 6px 0 10px; }
 .print section.s + section.s { border-top: 1px solid #dfe5e9; padding-top: 16px; }
 .print .s h2 { font-size: 17pt; margin: 0 0 8px; break-after: avoid; }
@@ -37,15 +37,15 @@ body.print { color: #0c1317; font-size: 10.4pt; line-height: 1.55; -webkit-print
 .print .verdict .a { color: #0c1317; font-size: 9.8pt; }
 .print .verdict .vnum { color: #5b6b76; }
 .print .verdict.analysis .big { color: #a16207; }
-.print .verdict.confirmed .big { color: #c62828; }
+.print .verdict.confirmed .big { color: #B3272A; }
 .print .verdict.none .big { color: #0c1317; }
 .print .pill { font-size: 8.4pt; min-height: 0; }
 .print .pill.confirmed, .print .pill.tested { color: #166534; }
 .print .pill.analysis { color: #854d0e; }
-.print .pill.unknown, .print .pill.notyet { color: #991b1b; }
+.print .pill.unknown, .print .pill.notyet { color: #B3272A; }
 .print .pill.unknown .dot { background: #EF5350; }
 .print .pill.none { color: #3d4c56; }
-.print sup.cite a { color: #b3261e; background: #fdecea; font-size: 7.5pt; }
+.print sup.cite a { color: #B3272A; background: #fdecea; font-size: 7.5pt; }
 .print .fig sup.cite a, .print .hero sup.cite a { color: var(--accent-text); background: rgba(239, 83, 80, 0.16); }
 .print .fig { padding: 14px 14px 12px; margin: 10px 0; border-radius: 8px; }
 .print .fig .ft { color: var(--text); }
@@ -68,7 +68,7 @@ body.print { color: #0c1317; font-size: 10.4pt; line-height: 1.55; -webkit-print
 .print .srcs { break-before: page; }
 .print .plist { margin: 0; padding: 0 0 0 0; list-style: none; font-size: 8.6pt; line-height: 1.45; }
 .print .plist > li { margin: 0 0 7px; break-inside: avoid; }
-.print .plist > li > b { color: #c62828; font-family: var(--mono); font-weight: 500; }
+.print .plist > li > b { color: #B3272A; font-family: var(--mono); font-weight: 500; }
 .print .plist .u { color: #5b6b76; font-family: var(--mono); font-size: 7.8pt; overflow-wrap: anywhere; text-decoration: none; }
 .print .plist ul { margin: 3px 0 0 18px; padding: 0; color: #3d4c56; }
 .print .foot { display: none; }
@@ -77,3 +77,13 @@ body.print { color: #0c1317; font-size: 10.4pt; line-height: 1.55; -webkit-print
 /* Figure 2 is tall; give it its own page so its labels print at a readable size */
 .print #fig-routes { break-before: page; }
 .print #fig-routes .art.wide svg { max-height: 232mm; }
+.print .pill.notyet { color: #B3272A; }
+.print .pill.notyet .dot { background: #EF5350; }
+.print .tbl td .why { font-size: 10pt; }
+.print .post .count { display: none; }
+/* a chapter opener stays with its first block; long numbered lists may break between items */
+.print .s > div.rv:not(.card) { break-after: avoid; }
+.print .card:has(ol) { break-inside: auto; }
+.print .card li { break-inside: avoid; }
+/* comfortable line length in print */
+.print .card p, .print .card li, .print .s .intro, .print .fig figcaption, .print .share .body p { max-width: 150mm; }

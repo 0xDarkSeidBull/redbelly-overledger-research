@@ -1,6 +1,6 @@
 URL: https://taskboard.redbellydao.network/tasks/TASK-29
 TITLE: Quant Overledger and Redbelly Interoperability Research (TASK-29) | Redbelly DAO Task Board
-NOTE: one link to a contributor website was replaced with [link removed], because the Task Board does not allow personal credit inside a deliverable. Nothing else was changed.
+NOTE: a contributor link in this copy was replaced with [link removed], because the Task Board does not allow personal credit inside a deliverable. Nothing else was changed.
 
 Skip to content
 Task Board

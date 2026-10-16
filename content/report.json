@@ -137,11 +137,11 @@
     },
     {
      "label": "confirmed",
-     "text": "Redbelly already has token bridges. Its developer portal lists three routes: Celer cBridge {br-celer-out}, LayerZero with Stargate {br-lz} and Lucid Labs {br-lucid}. Celer launched with a pegged bridge method {br-celer-pegged}, and its RBNT route goes out from Redbelly but not back {br-celer-out}. Redbelly announced Wrapped RBNT on Ethereum with the contract 0xb45f...bf13 {br-x br-x-ca}, which the portal lists under Lucid Labs {br-wrbnt-lucid}. The portal lists a different Ethereum contract for the Celer route {br-wrbnt-celer}."
+     "text": "Redbelly already has token bridges. Its developer portal lists three routes: Celer cBridge {br-celer-out}, LayerZero with Stargate {br-lz} and Lucid Labs {br-lucid}. Celer launched with a pegged bridge method {br-celer-pegged}, and its RBNT route goes out from Redbelly but not back {br-celer-out}. Redbelly announced Wrapped RBNT on Ethereum with the contract 0xb45f...bf13 {br-x br-x-ca}, which the portal lists under Lucid Labs {br-wrbnt-lucid}. The portal lists a different Ethereum contract for the Celer route {br-wrbnt-celer}. Listing these routes is not an official position: Redbelly has not published one on bridging {no-bridge-position}."
     },
     {
      "label": "confirmed",
-     "text": "Community research for TASK-08 found LayerZero live on Redbelly mainnet {t08-lz t08alt-lz}. A second TASK-08 entry found that, when it was written, no major interoperability protocol had deployed core messaging infrastructure to Redbelly testnet {t08alt-testnet}, and the selected entry built a lock-and-mint testnet bridge {t08-pattern}. The TASK-16 playbook says the bridges it calls official, Reddex and Lucid, then supported only bridging USDC and USDT from BNB Chain {t16-routes}."
+     "text": "Earlier Task Board research adds detail. The selected TASK-08 entry reported LayerZero live on Redbelly mainnet {t08-lz t08alt-lz} and built its own lock-and-mint bridge on testnet {t08-pattern}. A second TASK-08 entry found that, when it was written, no major interoperability protocol had deployed its core messaging setup to Redbelly testnet {t08alt-testnet}. When the TASK-16 playbook was written, the bridges it called official, Reddex and Lucid, supported only bridging USDC and USDT from BNB Chain {t16-routes}."
     }
    ],
    "short": "Redbelly facts that matter",
@@ -164,7 +164,13 @@
     },
     {
      "label": "unknown",
-     "text": "Four points are open. First, how Overledger would classify Redbelly. Self-serve is written for public, permissionless networks {con-selfserve-scope con-permissionless}, Overledger's own glossary calls a network where anyone can read but only allowlisted parties can write \"public permissioned\" {ol-permissioned}, and permissioned EVM networks are on the engagement route {con-besu}. The same docs send networks that need any other identity-bound configuration, and operator-gated public chains, to the engagement route {con-identity-bound con-engagement}, and Redbelly selects its node operators by application {rb-operator-select}. Writing to Redbelly needs an access credential {rb-access}, so Redbelly could be treated as an engagement network; the docs do not say. Second, the docs say only that the health check uses the chain's standard validation {con-health} and that a checker does a chain identifier lookup {con-family-cost}, not which call the EVM check uses. If it relies on net_version, Redbelly's answer {t-netversion} could fail it. Third, a public node URL must carry a provider API key {con-key}, and we did not confirm that Ankr's keyed service covers Redbelly. Fourth, Overledger's live network list {con-live-list} and the Fusion Rollup's list {api-networks} both answered \"Missing authorization header\" without an API key {t-ol-auth-all t-ol-auth}, so we could not see whether Redbelly is already listed."
+     "heading": "Four points are open",
+     "list": [
+      "How Overledger would classify Redbelly. Self-serve is written for public, permissionless networks {con-selfserve-scope con-permissionless}, Overledger's own glossary calls a network where anyone can read but only allowlisted parties can write \"public permissioned\" {ol-permissioned}, and permissioned EVM networks are on the engagement route {con-besu}. The same docs send networks that need any other identity-bound configuration, and operator-gated public chains, to the engagement route {con-identity-bound con-engagement}, and Redbelly selects its node operators by application {rb-operator-select}. Writing to Redbelly needs an access credential {rb-access}, so Redbelly could be treated as an engagement network; the docs do not say.",
+      "Which call the health check uses. The docs say only that it uses the chain's standard validation {con-health} and that a checker does a chain identifier lookup {con-family-cost}. If it relies on net_version, Redbelly's answer {t-netversion} could fail it.",
+      "Whether a provider's keyed service covers Redbelly. A public node URL must carry a provider API key {con-key}, and we did not confirm that Ankr's keyed service covers Redbelly.",
+      "Whether Redbelly is already listed. Overledger's live network list {con-live-list} and the Fusion Rollup's list {api-networks} both answered \"Missing authorization header\" without an API key {t-ol-auth-all t-ol-auth}, so we could not see it."
+     ]
     },
     {
      "label": "analysis",
@@ -189,12 +195,12 @@
   {
    "id": "work",
    "title": "6. The technical work a connection would need",
-   "intro": "Written for a non engineer. Steps marked Level 1 are small. Steps marked Level 3 depend on Quant, because Redbelly is not among the documented Fusion Rollup networks {fus-connected} and bridge tokens are added by Quant's governance {fw-token-gov}; the accounts involved would also need Redbelly access {rb-access}. No such work has been announced {no-talks}.",
+   "intro": "Written for a non engineer. Steps marked Level 1 are small, but only if Overledger treats Redbelly as a self-serve network, which its docs do not confirm {con-selfserve-scope con-identity-bound}. Steps marked Level 3 depend on Quant, because Redbelly is not among the documented Fusion Rollup networks {fus-connected} and bridge tokens are added by Quant's governance {fw-token-gov}; the accounts involved would also need Redbelly access {rb-access}. No such work has been announced {no-talks}.",
    "blocks": [
     {
      "label": "analysis",
      "list": [
-      "Level 1, step 1: someone with an Overledger account registers a Redbelly node: the official RPC as a private node {con-public-private con-private-url} or, if an approved provider's keyed service covers Redbelly (not confirmed), that provider's endpoint as a public node {con-providers con-key}. The first registration also adds the network {con-new-network}. This is one form or one API call {con-one-call}.",
+      "Level 1, step 1: someone with an Overledger account registers a Redbelly node, the server Overledger would send requests to {con-forward}: the official RPC as a private node {con-public-private con-private-url} or, if an approved provider's keyed service covers Redbelly (not confirmed), that provider's endpoint as a public node {con-providers con-key}. The first registration also adds the network {con-new-network}. This is one form or one API call {con-one-call}.",
       "Level 1, step 2: the node has to pass Overledger's health check {con-health}. If the check fails, the node is not added, and the docs do not say what would happen next. For scale, a checker for a brand-new chain family is documented at about 2 days {con-family-cost}.",
       "Level 1, step 3: every address an institution sends from needs Redbelly write access, which its user enables after claiming an access credential from an accredited issuer {rb-access}. The organisation can also be verified as a business {rb-business}. They sign with their own keys and send the signed transaction, which the Gateway forwards unchanged {con-forward}.",
       "Level 3, step 1: the rollup's standard bridge and dispute contracts are deployed on Redbelly {fus-bridge-contracts}, from accounts that hold Redbelly access {rb-access}. These are the contracts that hold tokens sent to the rollup and let a challenger dispute its state during the dispute window {fus-dispute}.",
@@ -224,7 +230,7 @@
       "Rules stay on Redbelly. At Level 1 the Gateway passes each payload to a Redbelly node and passes back the native response unchanged {con-forward}, so Redbelly's access credential still applies to every sending account {rb-access}, and Tokeniser's eligibility checks still apply to every transfer of a Tokeniser asset {tk-point}.",
       "Key control. Institutions can keep and use their own keys in Overledger's model {flow-own-keys}.",
       "Unified balances, only at Level 3. The Fusion Rollup can merge copies of the same token from several chains into one balance {fus-unify}. Redbelly is not among the documented connected networks {fus-connected}, so as far as public sources show this is not available to Redbelly.",
-      "No known route to tokenised deposit networks yet. The Clearing House network will use Quant's technology for its interoperability layer {tch-layer}, but the announcements do not say which chains it will use. Whether it will ever reach Redbelly, or any public chain, is unknown {tch-date}."
+      "No known route to tokenised deposit networks. The Clearing House network will use Quant's technology for its interoperability layer {tch-layer}, but neither announcement names the chains it will use or mentions Redbelly. Whether it will ever reach Redbelly, or any public chain, is unknown {tch-date}."
      ]
     },
     {
@@ -354,17 +360,17 @@
   "paragraphs": [
    "Could Redbelly connect to Quant's Overledger? We looked only at public documents. Redbelly and Quant have not announced any partnership or talks, and this research does not suggest any.",
    "Overledger is Quant's platform for reaching many blockchains through one interface. Its self-serve route covers EVM chains, and Redbelly is EVM compatible, so a basic connection, reading Redbelly and sending transactions the sender has signed, looks possible. It is untested, and Overledger describes self-serve as for public permissionless networks, while writing to Redbelly needs a credential. Every Redbelly rule would still apply.",
-   "Overledger's Fusion Rollup, its shared layer for moving tokens between chains, does not list Redbelly among its connected networks, and the docs describe no self-serve way to add a chain. As far as public sources show, that part is not possible today.",
+   "Overledger's Fusion Rollup, its shared layer for moving tokens between chains, did not list Redbelly among the networks connected at its testnet launch, and the docs describe no self-serve way to add a chain. As far as public sources show, that part is not possible yet.",
    "Receptor credentials and Tokeniser's eligibility rules are enforced on Redbelly. In our reading of the docs, they do not follow a token to another chain by themselves, and no public source shows how they would. Keeping regulated assets on Redbelly avoids that gap.",
-   "Open questions: whether Overledger would treat Redbelly as self-serve, whether Redbelly passes its network check, which chains The Clearing House network will reach, and Redbelly's own position on bridging. Full report with every source: {site}"
+   "Open questions: whether Overledger would treat Redbelly as self-serve, whether Redbelly passes its health check, which chains The Clearing House network will reach, and Redbelly's own position on bridging. Full report with every source: {site}"
   ],
   "thread": [
-   "1/ The Clearing House picked Quant to power its tokenised deposit network, so people are asking: could Redbelly connect to Quant's Overledger? We read the public docs. No partnership or talks between Redbelly and Quant have been announced.",
-   "2/ Overledger reaches many chains through one interface. Its self-serve route covers EVM chains, and Redbelly is EVM compatible. A basic connection for reading data and sending signed transactions looks possible, but it is untested.",
+   "1/ The Clearing House picked Quant to power its tokenised deposit network, so people are asking: could Redbelly connect to Quant's Overledger? We read the public docs. Neither announcement mentions Redbelly, and no partnership or talks have been announced.",
+   "2/ Overledger reaches many chains through one interface. Its self-serve route covers EVM chains, and Redbelly is EVM compatible. A basic connection for reading data and sending signed transactions looks possible, but it is unconfirmed and untested.",
    "3/ Redbelly's rules still apply on that route. Every account that sends a transaction needs a Redbelly access credential, and Tokeniser checks eligibility on every transfer of its assets.",
-   "4/ Overledger's Fusion Rollup, which moves tokens between connected chains, does not list Redbelly, and the docs describe no self-serve way to add a chain. As far as public sources show, not possible today.",
+   "4/ Overledger's Fusion Rollup, which moves tokens between connected chains, did not list Redbelly at its testnet launch, and the docs describe no self-serve way to add a chain. As far as public sources show, that is not possible yet.",
    "5/ Our reading of the docs: Receptor credentials and Tokeniser rules do not travel with a token to another chain by themselves, so a copy elsewhere follows that chain's rules. Keeping regulated assets on Redbelly avoids the gap.",
-   "6/ Still unknown: whether Overledger would treat Redbelly as self-serve, since writing needs a credential, which chains The Clearing House network will reach, and Redbelly's position on bridging. Full report with every source: {site}"
+   "6/ Still unknown: whether Overledger would treat Redbelly as self-serve, since writing needs a credential; which chains The Clearing House network will reach; and Redbelly's position on bridging. Full report with every source: {site}"
   ],
   "description": "A plain language summary of the report for the community, as a few paragraphs and a six post X thread, with copy buttons."
  },

@@ -310,7 +310,7 @@ def summary_html(mode):
     paras = "".join(f'<p class="sum-p" data-raw="{esc(p.replace("{site}", SITE))}">{esc(p.replace("{site}", SITE))}</p>' for p in cs["paragraphs"])
     tag = "h1" if mode == "web" else "h2"
     h = (f'<section class="s" id="summary" aria-labelledby="h-summary">' + (chapter_top("summary") if mode == "web" else "") + f'<div class="rv"><p class="kicker"><span class="bar"></span><span class="num">{nn(n)}</span>Share it</p>'
-         f'<{tag} id="h-summary">Community summary</{tag}><p class="intro">Plain language, ready for the DAO to share. Copy the paragraphs, a single post, or the whole thread.</p></div>')
+         f'<{tag} id="h-summary">Community summary</{tag}><p class="intro">Plain language, ready for the DAO to share.{"" if mode == "print" else " Copy the paragraphs, a single post, or the whole thread."}</p></div>')
     btn = lambda attrs, label, msg, extra="": (f'<button class="copy{extra}" type="button" {attrs} data-msg="{msg}">{ICON["copy"]}<span class="lbl">{label}</span></button>')
     hx = "h2" if mode == "web" else "h3"
     h += (f'<div class="share rv"><div class="shead"><{hx}>A few paragraphs</{hx}>' +
@@ -602,6 +602,12 @@ def clean_app_props(path):
     with zipfile.ZipFile(path) as zin, zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as zout:
         for item in zin.infolist():
             data = zin.read(item.filename)
+            if item.filename == "docProps/thumbnail.jpeg":
+                continue
+            if item.filename == "_rels/.rels":
+                data = re.sub(rb'<Relationship[^>]*thumbnail[^>]*/>', b"", data)
+            if item.filename == "[Content_Types].xml":
+                data = re.sub(rb'<Override[^>]*thumbnail[^>]*/>', b"", data)
             if item.filename == "docProps/app.xml":
                 data = re.sub(rb"<Application>.*?</Application>", b"<Application></Application>", data)
                 data = re.sub(rb"<AppVersion>.*?</AppVersion>", b"", data)
@@ -615,7 +621,11 @@ def build_docx(path, pngs):
     d = Document()
     st = d.styles["Normal"]; st.font.name = "Calibri"; st.font.size = Pt(10.5)
     for sec in d.sections:
-        sec.left_margin = sec.right_margin = Cm(2)
+        sec.page_width, sec.page_height = Cm(21), Cm(29.7)
+        sec.left_margin = sec.right_margin = Cm(2.4)
+    for name in ("Title", "Heading 1", "Heading 2"):
+        d.styles[name].font.color.rgb = RGBColor(0x0F, 0x1A, 0x22)
+    st.font.size = Pt(11)
     d.add_heading(R["title"], 0)
     d.add_paragraph(R["subtitle"] + ".").runs[0].italic = True
     p0 = d.add_paragraph(f"Redbelly DAO community research. Feasibility report, sources last verified {VERIFIED}. Web version: "); docx_link(p0, SITE)
@@ -634,7 +644,8 @@ def build_docx(path, pngs):
     for k in R["key_findings"]:
         c = t.add_row().cells; c[0].text = k["q"]; c[1].text = k["verdict"]; c[2].text = plain(k["a"] + " {" + k["cite"] + "}"); c[3].text = LABELS[k["label"]]
     def add_fig(did):
-        d.add_picture(str(pngs[did]), width=Cm(17))
+        d.add_picture(str(pngs[did]), width=Cm(16))
+        d.inline_shapes[-1]._inline.docPr.set("descr", f"Figure {FIGNUM[did]}. {DIAGRAMS[did]['title']}. " + plain(DIAGRAMS[did]["caption"]))
         cap = d.add_paragraph(); r = cap.add_run(f"Figure {FIGNUM[did]}. {DIAGRAMS[did]['title']}. "); r.bold = True
         cap.add_run(plain(DIAGRAMS[did]["caption"]))
     for s in R["sections"]:
@@ -659,9 +670,13 @@ def build_docx(path, pngs):
                 if b.get("list"):
                     if not b.get("text"):
                         r = d.add_paragraph().add_run(f"[{tag}]"); r.bold = True; r.font.color.rgb = RGBColor(0xC6, 0x28, 0x28)
-                    style = "List Number" if (s["id"] in ("work", "compliance") and (s["id"] == "work" or b.get("heading", "").startswith("Where"))) else "List Bullet"
-                    for li in b["list"]:
-                        d.add_paragraph(plain(li), style=style)
+                    # numbered lists carry their own numbers, so they match the figures (Word's auto numbering would run on across lists)
+                    numbered = s["id"] == "compliance" and b.get("heading", "").startswith("Where")
+                    for k, li in enumerate(b["list"], 1):
+                        if numbered:
+                            q = d.add_paragraph(f"{k}. " + plain(li)); q.paragraph_format.left_indent = Cm(0.6); q.paragraph_format.first_line_indent = Cm(-0.6)
+                        else:
+                            d.add_paragraph(plain(li), style="List Bullet")
             for did in figs_for(s["id"], bi):
                 add_fig(did)
     cs = R["community_summary"]
@@ -670,7 +685,7 @@ def build_docx(path, pngs):
         d.add_paragraph(p.replace("{site}", SITE))
     d.add_heading("As an X thread", 2)
     for x in cs["thread"]:
-        d.add_paragraph(x.replace("{site}", SITE), style="List Number")
+        d.add_paragraph(x.replace("{site}", SITE))
     d.add_heading("Source list", 1)
     d.add_paragraph("Every factual claim cites one of these sources. Under each source are the exact words the report relies on.")
     pr = d.add_paragraph("Saved copies of every source page, with SHA-256 hashes: "); docx_link(pr, f"{SITE}/evidence/manifest.json")
@@ -678,7 +693,8 @@ def build_docx(path, pngs):
     for sid in ORDER:
         s = SOURCES[sid]
         p = d.add_paragraph(); r = p.add_run(f"S{NUM[sid]}  {s['publisher']}: {s['title']}"); r.bold = True
-        docx_link(d.add_paragraph(), src_url(s))
+        p.paragraph_format.keep_with_next = True
+        pl = d.add_paragraph(); pl.paragraph_format.keep_with_next = True; docx_link(pl, src_url(s))
         for f in FACTS.values():
             if f["source"] == sid and f["id"] in USED:
                 d.add_paragraph("“" + f["quote"] + "”", style="List Bullet")
@@ -773,10 +789,10 @@ def main():
     with sync_playwright() as p:
         b = p.chromium.launch(); pg = b.new_page()
         pg.goto((ROOT / "build/print.html").as_uri()); pg.wait_for_timeout(600)
-        pg.pdf(path=str(PUB / "downloads" / PDF_NAME), format="A4", print_background=True,
+        pg.pdf(path=str(PUB / "downloads" / PDF_NAME), format="A4", print_background=True, outline=True, tagged=True,
                margin={"top": "14mm", "bottom": "16mm", "left": "14mm", "right": "14mm"}, display_header_footer=True,
                header_template="<span></span>",
-               footer_template="<div style='font-family:sans-serif;font-size:8px;width:100%;padding:0 14mm;display:flex;justify-content:space-between;color:#8fa1ad'>"
+               footer_template="<div style='font-family:sans-serif;font-size:9px;width:100%;padding:0 14mm;display:flex;justify-content:space-between;color:#5b6b76'>"
                                "<span>Could Redbelly connect to Quant Overledger? Feasibility research only.</span><span><span class='pageNumber'></span> / <span class='totalPages'></span></span></div>")
         b.close()
     build_docx(PUB / "downloads" / DOCX_NAME, render_pngs())

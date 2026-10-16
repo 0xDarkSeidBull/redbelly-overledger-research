@@ -44,7 +44,7 @@ https://overledger.vercel.app/evidence/tests/rpc-check.txt (also `evidence/tests
 - "https://governors.mainnet.redbelly.network eth_chainId -> {"jsonrpc":"2.0","id":1,"result":"0x97"}"
 - "https://rpc.ankr.com/redbelly_mainnet eth_chainId -> {"id":1,"jsonrpc":"2.0","result":"0x97"}"
 - "https://governors.mainnet.redbelly.network net_version -> {"jsonrpc":"2.0","id":1,"error":{"code":-32601,"message":"the method net_version does not exist/is not available"}}"
-- "eth_getBlockByNumber -> {"jsonrpc":"2.0","id":1,"result":{"
+- "eth_getBlockByNumber -> {"jsonrpc":"2.0","id":1,"result":{"baseFeePerGas":"0xe0fbb4df40c0""
 
 **S5. Vine, Redbelly Network developer portal**: User access  
 https://vine.redbelly.network/identity/user-access/

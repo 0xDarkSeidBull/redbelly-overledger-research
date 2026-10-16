@@ -84,7 +84,7 @@ python3 scripts/check.py --online   # also confirms every source link answers to
 - a labelled paragraph cites no source, a citation points to an unknown fact, or a source is never cited
 - any sentence about Redbelly or Quant suggests a partnership, talks, plans or an agreement
 - the text uses investment language or hype words, an en dash, an em dash or an emoji
-- any deliverable contains a personal name, handle or personal website listed in the local, git-ignored `.credit-names` and `.credit-links` files, or the Word file names a tool or a person in its properties
+- any deliverable contains a personal name, handle or personal website listed in the local, git-ignored `.credit-names` and `.credit-links` files (this scan runs only where those private lists exist; the "made by" and Word property checks always run), or the Word file names a tool or a person in its properties
 - an X post is over 280 characters
 - the PDF, the Word file or the website does not contain the current text of every paragraph, or the source list misses a quote
 - a diagram breaks the SVG rules (brand palette only, prefixed ids, title and description, no styles, images or outside links), or its words break the wording rules above
@@ -98,6 +98,7 @@ To repeat the RPC test, run `eth_chainId` and `net_version` against `https://gov
 
 ```
 pip install playwright python-docx pillow
+python3 -m playwright install chromium
 python3 scripts/build.py
 python3 scripts/check.py
 python3 scripts/serve.py            # then open http://localhost:8000
@@ -113,5 +114,5 @@ The site is static and deploys on Vercel straight from this repository. `vercel.
 
 - Fonts: Be Vietnam Pro and JetBrains Mono, SIL Open Font License 1.1 (`licenses/`), self-hosted from `public/fonts/`.
 - Logo and icon: the Redbelly DAO logo and the Task Board icon, from the Task Board brand kit (taskboard.redbellydao.network/brand).
-- Snapshots in `evidence/` are verbatim copies of third-party pages, kept only so every quote can be checked. They keep the source's own punctuation. Two exceptions, because the Task Board does not allow personal credit inside a deliverable: in the TASK-08 guide copy, two personal names were replaced with [name removed] and three links to a contributor website with [link removed], and in the TASK-29 brief copy one such link was replaced with [link removed]. Each file's header and `evidence/manifest.json` say so.
+- Snapshots in `evidence/` are verbatim copies of third-party pages, kept only so every quote can be checked. They keep the source's own punctuation. The one exception: because the Task Board does not allow personal credit inside a deliverable, contributor names and links in two copies (the TASK-08 guide and the TASK-29 brief) were replaced with [name removed] and [link removed]. Each file's header and `evidence/manifest.json` say so.
 - Diagrams are drawn for this report in SVG. No third-party images are used.

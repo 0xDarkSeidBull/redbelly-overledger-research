@@ -34,7 +34,7 @@ html,body{{margin:0;background:#141f26;font-family:"Be Vietnam Pro"}} .f1{{font:
         b = p.chromium.launch()
         pg = b.new_page(viewport={"width": width + 32, "height": 800}, device_scale_factor=2)
         # Load from a file URL so the local @font-face files load; set_content runs on about:blank and silently falls back.
-        tmp = Path("/tmp") / f"render-{svg_path.stem}-{width}.html"; tmp.write_text(page)
+        tmp = Path(__import__("tempfile").gettempdir()) / f"render-{svg_path.stem}-{width}.html"; tmp.write_text(page)
         pg.goto(tmp.as_uri()); pg.evaluate("document.fonts.ready.then(() => true)"); pg.wait_for_timeout(300)
         loaded = pg.evaluate("[...document.fonts].filter(f => f.status === 'loaded').map(f => f.family + ' ' + f.weight)")
         if not any("Be Vietnam Pro" in f for f in loaded):

@@ -13,6 +13,9 @@ class CleanUrls(http.server.SimpleHTTPRequestHandler):
 
     def send_head(self):
         path = self.path.split("?")[0].split("#")[0]
+        if path.endswith(".html"):
+            clean = "/" if path == "/index.html" else path[:-5]
+            self.send_response(308); self.send_header("Location", clean); self.end_headers(); return None
         if path != "/" and not (PUB / path.lstrip("/")).is_file() and (PUB / (path.lstrip("/") + ".html")).is_file():
             self.path = path + ".html"
         elif path != "/" and not (PUB / path.lstrip("/")).exists():
