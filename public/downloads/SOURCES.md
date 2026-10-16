@@ -33,12 +33,13 @@ https://docs.overledger.dev/docs/connectors
 - "For networks where it does not matter which node a client connects to, i.e. public permissionless networks"
 - "Hyperledger Besu (permissioned) Permissioned EVM Used in regulated EVM deployments."
 - "Run GET /networks to retrieve the live list."
-- "Overledger lets you register a managed-provider node URL via a single API call. The network then becomes immediately reachable through the Overledger Gateway."
+- "For networks where it does not matter which node a client connects to, i.e. public permissionless networks, Quant Connect lets you register a managed-provider node URL via a single UI form and Overledger lets you register a managed-provider node URL via a single API call. The network then becomes immediately reachable through the Overledger Gateway."
 - "Any tenant with access to the network, the node joins the shared load-balancing pool for that network."
 - "the node is scoped to your user identity"
+- "DLTs that need consortium membership, MSP enrolment, channel agreement, notary trust, privacy-group setup, or any other identity-bound configuration are onboarded through the engagement path"
 
 **S4. Test run for this report**: JSON-RPC calls to Redbelly mainnet and testnet endpoints, 15 October 2026  
-evidence/tests/rpc-check.txt (in this repository)
+https://overledger.vercel.app/evidence/tests/rpc-check.txt (also `evidence/tests/rpc-check.txt` in the repository)
 
 - "https://governors.mainnet.redbelly.network eth_chainId -> {"jsonrpc":"2.0","id":1,"result":"0x97"}"
 - "https://rpc.ankr.com/redbelly_mainnet eth_chainId -> {"id":1,"jsonrpc":"2.0","result":"0x97"}"
@@ -61,7 +62,7 @@ https://docs.overledger.dev/docs/fusion-rollup
 - "Network ID. Exposed for wallets and tools that predate eth_chainId."
 
 **S7. Test run for this report**: Calls to the public Overledger server API without an account, 15 October 2026  
-evidence/tests/overledger-api-check.txt (in this repository)
+https://overledger.vercel.app/evidence/tests/overledger-api-check.txt (also `evidence/tests/overledger-api-check.txt` in the repository)
 
 - "GET https://fusion-rollup.quant.dev/networks/fusion -> HTTP 401 {"status":401,"error":"Missing authorization header.""
 - "GET https://fusion-rollup.quant.dev/networks -> HTTP 401 {"status":401,"error":"Missing authorization header.""
@@ -79,6 +80,7 @@ https://tokeniser.com/technology
 - "Deterministic finality settles a transaction in a single round, final the moment it completes."
 - "full EVM compatibility connects you to more than 150 networks out of the box"
 - "Underneath it runs Redbelly Network"
+- "Full EVM compatibility gives connection to more than 150 networks out of the box, with permissioned or permissionless access as your mandate allows."
 
 **S10. The Clearing House**: The Clearing House Partners with Quant to Advance the On-Chain Money Initiative (24 September 2026)  
 https://www.theclearinghouse.org/payment-systems/Articles/2026/09/The-Clearing-House-Partners-with-Quant-to-Advance-the--On-Chain-Money-Initiative
@@ -111,14 +113,17 @@ https://docs.overledger.dev/docs/overview
 - "A network with controlled write access; "public permissioned" means anyone can read but only allowlisted parties can write."
 - "The Rollup connects to a subset of these networks."
 - "It applies to every public or permissioned DLT network that the Gateway reaches"
+- "Single entry point. Authenticates, routes traffic, hosts Orchestration, fronts the Fusion Rollup."
+- "There is one Connector per DLT family"
 
 **S14. Quant, Overledger documentation**: Chapter 6: Flow Apps  
 https://docs.overledger.dev/docs/flow-apps
 
 - "today every shipped app is internal"
 - "The Flow App catalogue is intentionally not enumerated in these docs"
-- "Three phases between Client, Gateway, Flow App, and Signer Flow App. The Sign phase hands off via a sub-flow; the Client never sees private-key material."
+- "The calling Flow App and the Gateway routing the sub-flow never see private keys. Key material is always under your control."
 - "You hold the keys (BYO signing, see chapter 7.2)."
+- "Discover what's available for your account through one of two channels"
 
 **S15. Redbelly Network technical documentation**: Home  
 https://docs.redbelly.network
@@ -152,6 +157,7 @@ https://vine.redbelly.network/business-verification/
 https://vine.redbelly.network/nodes/become-operator/
 
 - "Node operators MUST have network access for 2 accounts and provide their public address when applying to run a node."
+- "Applicants will be selected based upon their previous experience, location and commitment to the Redbelly Project."
 
 **S21. Vine, Redbelly Network developer portal**: Bridged tokens: Celer cBridge  
 https://vine.redbelly.network/bridged-tokens/celer/
@@ -232,7 +238,8 @@ https://github.com/Redbelly-DAO-Community-Taskboard/TASK-08-bridge-integration-g
 **S35. TASK-08 entry, public repository**: Bridging Ethereum Sepolia to Redbelly Testnet: technical guide  
 https://github.com/tycayomide/redbelly-testnet-bridge/blob/main/TECHNICAL_GUIDE.md
 
-- "no major interoperability protocol has deployed core messaging infrastructure (endpoints, gateways, or guardian sets) to"
+- "as of this writing no major interoperability protocol has deployed core messaging infrastructure (endpoints, gateways, or guardian sets) to Redbelly Testnet specifically"
+- "LayerZero went live on Redbelly Mainnet"
 
 **S36. Redbelly DAO Community Task Board**: TASK-16 Cross-Chain Recovery Playbook (selected entry, PDF)  
 https://github.com/Redbelly-DAO-Community-Taskboard/TASK-16-cross-chain-recovery-playbook/blob/main/deliverable/Redbelly-task-16-revised.pdf

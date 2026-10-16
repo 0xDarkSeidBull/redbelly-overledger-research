@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 900" role="img" aria-labelledby="receptor-n-title receptor-n-desc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 920" role="img" aria-labelledby="receptor-n-title receptor-n-desc">
 <title id="receptor-n-title">Which Receptor checks could work off Redbelly</title>
-<desc id="receptor-n-desc">A Receptor credential, a W3C verifiable credential held by the user, splits into two methods. Proof by Query is checked by a verifier smart contract against identity state published on Redbelly, so another chain only works if the setup is rebuilt there; Selective Disclosure is checked off-chain against the issuer's BBS+ signature, so it could be checked anywhere in principle, but we found no Overledger app that does it.</desc>
+<desc id="receptor-n-desc">A Receptor credential, a W3C verifiable credential held by the user, splits into two methods. Proof by Query is checked by a verifier smart contract against identity state published on Redbelly, so another chain only works if the setup is rebuilt there; Selective Disclosure is checked off-chain against the issuer's BBS+ signature, so it could be checked anywhere in principle, but the Overledger app catalogue is not public. The access credential unlocks write access on Redbelly, and no source shows another chain reading it.</desc>
 <defs>
 <marker id="receptor-n-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#8fa1ad"/></marker>
 </defs>
@@ -38,13 +38,13 @@
 <rect x="64" y="676" width="312" height="104" rx="6" fill="#141f26" stroke="#FCD34D" stroke-width="1.5"/>
 <circle cx="82.5" cy="702.0" r="4" fill="#FCD34D"/>
 <text x="93" y="707.0" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" letter-spacing="1.2" fill="#FCD34D">ANALYSIS</text>
-<text font-family="Be Vietnam Pro, sans-serif" fill="#f1f5f8"><tspan x="78" y="740" font-size="14" font-weight="600" fill="#f1f5f8">Could be checked anywhere in principle,</tspan><tspan x="78" dy="21" font-size="14" font-weight="400" fill="#c2ced6">no such Overledger app foundday</tspan></text>
+<text font-family="Be Vietnam Pro, sans-serif" fill="#f1f5f8"><tspan x="78" y="740" font-size="14" font-weight="600" fill="#f1f5f8">Could be checked anywhere in principle,</tspan><tspan x="78" dy="21" font-size="14" font-weight="400" fill="#c2ced6">no public list of Overledger apps</tspan></text>
 <circle cx="26" cy="88" r="3" fill="#8fa1ad"/>
 <path d="M26 88 V142" fill="none" stroke="#8fa1ad" stroke-width="1.5"/>
 <path d="M26 142 V492" fill="none" stroke="#8fa1ad" stroke-width="1.5"/>
 <path d="M26 142 Q26 150 34 150 H50" fill="none" stroke="#8fa1ad" stroke-width="1.5" marker-end="url(#receptor-n-arrow)"/>
 <path d="M26 492 Q26 500 34 500 H50" fill="none" stroke="#8fa1ad" stroke-width="1.5" marker-end="url(#receptor-n-arrow)"/>
-<rect x="12" y="816" width="376" height="76" rx="6" fill="#0c1317" stroke="#223039" stroke-width="1.5"/>
+<rect x="12" y="816" width="376" height="96" rx="6" fill="#0c1317" stroke="#223039" stroke-width="1.5"/>
 <g transform="translate(28 843) scale(0.916667)" fill="none" stroke="#EF5350" stroke-width="1.96" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8.5 10.5V7.8a3.5 3.5 0 0 1 7 0v2.7M12 14.5v2.2"/></g>
-<text font-family="Be Vietnam Pro, sans-serif" font-size="14" fill="#8fa1ad"><tspan x="64" y="849">The access credential that unlocks</tspan><tspan x="64" dy="20">write access works <tspan font-weight="500" fill="#c2ced6">only on Redbelly.</tspan></tspan></text>
+<text font-family="Be Vietnam Pro, sans-serif" font-size="14" fill="#8fa1ad"><tspan x="64" y="849">The access credential unlocks write</tspan><tspan x="64" dy="20">access on Redbelly. <tspan font-weight="500" fill="#c2ced6">No source shows</tspan></tspan><tspan x="64" dy="20" font-weight="500" fill="#c2ced6">another chain reading it.</tspan></text>
 </svg>

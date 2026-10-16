@@ -24,24 +24,26 @@ A feasibility report on whether Redbelly Network could connect to Quant's Overle
 
 ## How the report keeps facts, analysis and unknowns apart
 
-Every paragraph carries one label:
+Every finding paragraph carries one label (chapter intros and figure captions summarise the cited facts around them):
 
 - **Confirmed**: stated in a public source, which is linked and quoted.
 - **Tested**: we ran the call ourselves on 15 October 2026. The log is in `evidence/tests/`.
 - **Analysis**: our reasoning from the confirmed facts it cites.
 - **Unknown**: not answered by any public source we found.
 
-Chapter 9 lists everything that is not possible yet or unknown.
+Chapter 9 lists everything that is not possible yet or unknown. A short "Plain words" list on the home page, and near the start of the PDF and Word file, explains the technical terms in one or two lines each.
 
 ## The website
 
 | Address | Page |
 |---|---|
-| `/` | The short answer, the four key findings, how to read the labels, and the list of chapters with reading times |
+| `/` | The short answer, the four key findings, how to read the labels, plain words for the technical terms, and the list of chapters with reading times |
 | `/chapters/why-now` to `/chapters/community-summary` | One page per chapter, 11 in all. Each shows "Chapter 3 of 11" with a progress bar, and Previous and Next at the end |
 | `/sources` | Every source in groups, the exact words relied on, where each is used, and a filter |
+| `/evidence/` | The saved copy of every source page, `manifest.json` with the SHA-256 of each, and the logs of our own tests |
 
 - Every chapter is a real page with its own address, so it can be linked, shared and read without JavaScript. Addresses have no `.html`.
+- Under the header of each chapter, a slider shows the position ("Chapter 3 of 11"); drag or tap it to open any chapter.
 - The side menu has two entries, Key findings and Chapters. Chapters opens a list of all 11 chapters, with the open chapter boxed in red.
 - The bar at the bottom of the screen gives the chapter list, Previous and Next, the source list and back to top. On a chapter page the left and right arrow keys also go to the previous and next chapter.
 - A citation such as S5 opens the source list at S5 and marks it with a red box. Hovering a citation shows the quoted words first.
@@ -60,7 +62,7 @@ Chapter 9 lists everything that is not possible yet or unknown.
 | `public/diagrams/` | The diagrams as hand-written SVG |
 | `evidence/snapshots/` | A text snapshot of every source page as it read on 15 October 2026 |
 | `evidence/tests/` | Output of our own JSON-RPC calls to Redbelly and of the calls to the public Overledger API |
-| `evidence/manifest.json` | Address, capture time (UTC) and SHA-256 of every evidence file |
+| `evidence/manifest.json` | Address, capture time (UTC) and SHA-256 of every evidence file. The build also publishes `evidence/` on the site |
 | `scripts/build.py` | Builds the website, the PDF, the Word file, `SOURCES.md` and `COMMUNITY-SUMMARY.md` |
 | `scripts/site.css`, `scripts/site.js`, `scripts/print.css` | Website style and behaviour, and the print style used for the PDF |
 | `scripts/render_diagram.py` | Renders one diagram to PNG and measures it: smallest text size, overlapping text, text outside its box |
@@ -87,6 +89,7 @@ python3 scripts/check.py --online   # also confirms every source link answers to
 - the PDF, the Word file or the website does not contain the current text of every paragraph, or the source list misses a quote
 - a diagram breaks the SVG rules (brand palette only, prefixed ids, title and description, no styles, images or outside links), or its words break the wording rules above
 - the website loads anything from another domain
+- a word drawn in a diagram is not in that diagram's approved wording in `content/diagrams.json` (this catches typos)
 - a link inside the website opens nothing, points to a missing anchor, or uses an address ending in `.html`
 
 To repeat the RPC test, run `eth_chainId` and `net_version` against `https://governors.mainnet.redbelly.network` (see `evidence/tests/rpc-check.txt`).
@@ -109,6 +112,6 @@ The site is static and deploys on Vercel straight from this repository. `vercel.
 ## Licences and credits
 
 - Fonts: Be Vietnam Pro and JetBrains Mono, SIL Open Font License 1.1 (`licenses/`), self-hosted from `public/fonts/`.
-- Logo and icon: the Redbelly DAO logo on dark and the Task Board icon, from the Task Board brand kit (taskboard.redbellydao.network/brand).
+- Logo and icon: the Redbelly DAO logo and the Task Board icon, from the Task Board brand kit (taskboard.redbellydao.network/brand).
 - Snapshots in `evidence/` are verbatim copies of third-party pages, kept only so every quote can be checked. They keep the source's own punctuation. Two exceptions, because the Task Board does not allow personal credit inside a deliverable: in the TASK-08 guide copy, two personal names were replaced with [name removed] and three links to a contributor website with [link removed], and in the TASK-29 brief copy one such link was replaced with [link removed]. Each file's header and `evidence/manifest.json` say so.
 - Diagrams are drawn for this report in SVG. No third-party images are used.

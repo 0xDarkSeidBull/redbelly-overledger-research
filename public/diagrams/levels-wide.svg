@@ -1,13 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 786" role="img" aria-labelledby="levels-w-title levels-w-desc">
 <title id="levels-w-title">Three meanings of 'connect', three answers</title>
-<desc id="levels-w-desc">Three stacked cards show, for each meaning of connect, what is in place and what is missing or open. Level 1, Gateway access, is possibly, untested; Level 2, Flow Apps, is unknown; Level 3, Fusion Rollup, is not possible yet.</desc>
+<desc id="levels-w-desc">Three stacked cards show, for each meaning of connect, what is in place and what is missing or open. Level 1, Gateway access, is possibly, unconfirmed; Level 2, Flow Apps, is unknown; Level 3, Fusion Rollup, is not possible yet.</desc>
 <rect x="16" y="8" width="928" height="280" rx="6" fill="#0c1317" stroke="#223039" stroke-width="1.5"/>
 <text x="36" y="70" font-family="JetBrains Mono, monospace" font-size="52" font-weight="500" fill="#ffb3ae">1</text>
 <text x="82" y="43" font-family="JetBrains Mono, monospace" font-size="15" font-weight="500" fill="#8fa1ad" letter-spacing="1.5">LEVEL</text>
 <text x="82" y="70" font-family="Be Vietnam Pro, sans-serif" font-size="20" font-weight="700" fill="#f1f5f8">Gateway access</text>
 <text font-family="Be Vietnam Pro, sans-serif" font-size="15" font-weight="400" fill="#c2ced6"><tspan x="38" y="104">read data, send self-signed</tspan><tspan x="38" dy="21">transactions</tspan></text>
 <circle cx="42.5" cy="158.0" r="4" fill="#FCD34D"/>
-<text x="53" y="163.4" font-family="JetBrains Mono, monospace" font-size="15" font-weight="500" fill="#FCD34D" letter-spacing="1.2">POSSIBLY, UNTESTED</text>
+<text x="53" y="163.4" font-family="JetBrains Mono, monospace" font-size="15" font-weight="500" fill="#FCD34D" letter-spacing="1.2">POSSIBLY, UNCONFIRMED</text>
 <rect x="280" y="30" width="642" height="236" rx="6" fill="#17222a" stroke="#263641" stroke-width="1.5"/>
 <line x1="557" y1="48" x2="557" y2="248" stroke="#263641" stroke-width="1.5"/>
 <text x="300" y="62" font-family="JetBrains Mono, monospace" font-size="15" font-weight="500" fill="#8fa1ad" letter-spacing="1.5">IN PLACE</text>
@@ -36,13 +36,13 @@
 <text x="82" y="303" font-family="JetBrains Mono, monospace" font-size="15" font-weight="500" fill="#8fa1ad" letter-spacing="1.5">LEVEL</text>
 <text x="82" y="330" font-family="Be Vietnam Pro, sans-serif" font-size="20" font-weight="700" fill="#f1f5f8">Flow Apps</text>
 <text font-family="Be Vietnam Pro, sans-serif" font-size="15" font-weight="400" fill="#c2ced6"><tspan x="38" y="364">Quant workflows</tspan><tspan x="38" dy="21">such as signing</tspan></text>
-<circle cx="42.5" cy="418.0" r="4" fill="#EF5350"/>
+<circle cx="42.5" cy="418.0" r="4" fill="#ffb3ae"/>
 <text x="53" y="423.4" font-family="JetBrains Mono, monospace" font-size="15" font-weight="500" fill="#ffb3ae" letter-spacing="1.2">UNKNOWN</text>
 <rect x="280" y="290" width="642" height="151" rx="6" fill="#17222a" stroke="#263641" stroke-width="1.5"/>
 <text x="300" y="322" font-family="JetBrains Mono, monospace" font-size="15" font-weight="500" fill="#8fa1ad" letter-spacing="1.5">OPEN</text>
 <line x1="300" y1="336" x2="902" y2="336" stroke="#263641" stroke-width="1"/>
 <circle cx="308" cy="361" r="4.5" fill="none" stroke="#8fa1ad" stroke-width="1.5"/>
-<text font-family="Be Vietnam Pro, sans-serif" font-size="15" font-weight="400" fill="#f1f5f8"><tspan x="326" y="366">App catalogue not published</tspan></text>
+<text font-family="Be Vietnam Pro, sans-serif" font-size="15" font-weight="400" fill="#f1f5f8"><tspan x="326" y="366">Catalogue shown only to account holders</tspan></text>
 <circle cx="308" cy="395" r="4.5" fill="none" stroke="#8fa1ad" stroke-width="1.5"/>
 <text font-family="Be Vietnam Pro, sans-serif" font-size="15" font-weight="400" fill="#f1f5f8"><tspan x="326" y="400">Every shipped app is built by Quant</tspan></text>
 <rect x="16" y="477" width="928" height="267" rx="6" fill="#0c1317" stroke="#223039" stroke-width="1.5"/>

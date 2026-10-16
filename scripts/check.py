@@ -48,7 +48,8 @@ for f in FACTS:
     if not s:
         errors.append(f"fact {f['id']}: unknown source {f['source']}"); continue
     snap = (ROOT / "evidence/snapshots" / s["file"]).read_text(encoding="utf-8", errors="ignore")
-    if norm(f["quote"]) not in norm(snap):
+    # Markdown bold markers in a copied README are formatting, not words
+    if norm(f["quote"]) not in norm(snap.replace("**", "")):
         errors.append(f"fact {f['id']}: quote not found in {s['file']}")
 
 # 2 citations and labels
@@ -72,6 +73,8 @@ for s in R["sections"]:
             for t in ([b["text"]] if b.get("text") else []) + b.get("list", []):
                 if not CITE.search(t):
                     errors.append(f"{where}: a {b['label']} statement cites no source: {t[:60]}")
+for term, d in R.get("glossary", []):
+    prose += [("glossary " + term, term), ("glossary " + term, d)]
 summary = [("community summary", p) for p in R["community_summary"]["paragraphs"]] + [("X thread", t) for t in R["community_summary"]["thread"]]
 # diagrams: captions are prose with citations; the words drawn inside each SVG go through the same wording rules
 DIAG = json.loads((ROOT / "content/diagrams.json").read_text())
@@ -99,6 +102,11 @@ for d in DIAG:
             if c.lower() not in PALETTE:
                 errors.append(f"figure {d['id']} {v}: colour {c} is outside the brand palette")
         words = " ".join(re.sub(r"<[^>]+>", " ", m) for m in re.findall(r"<(?:text|title|desc)\b.*?</(?:text|title|desc)>", svg, re.S))
+        # every word drawn in the figure must come from its approved wording in content/diagrams.json (catches typos)
+        drawn = " ".join(re.sub(r"<[^>]+>", " ", m) for m in re.findall(r"<text\b.*?</text>", svg, re.S))
+        allowed = set(re.findall(r"[a-z0-9]+", __import__("html").unescape(" ".join(d["content"]) + " " + d["title"] + " " + d["caption"]).lower()))
+        for w in sorted(set(re.findall(r"[a-z0-9]+", __import__("html").unescape(drawn).lower())) - allowed):
+            errors.append(f"figure {d['id']} {v}: the word '{w}' is drawn but not in the figure's wording in content/diagrams.json")
         svg_texts.append((f"figure {d['id']} {v} text", __import__("html").unescape(re.sub(r"\s+", " ", words))))
 used = set()
 for where, t in prose:
@@ -169,6 +177,10 @@ docx_file = ROOT / "public/downloads/redbelly-overledger-feasibility-report.docx
 if docx_file.exists():
     from docx import Document
     cp = Document(docx_file).core_properties
+    import zipfile
+    app = zipfile.ZipFile(docx_file).read("docProps/app.xml").decode("utf-8", "ignore")
+    if re.search(r"<Application>[^<]+</Application>", app):
+        errors.append("Word file: docProps/app.xml names an application")
     for field in ("author", "last_modified_by", "comments"):
         v = (getattr(cp, field) or "").lower()
         if "python-docx" in v or any(n in v for n in (names if cn.exists() else [])):

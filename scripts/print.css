@@ -1,4 +1,4 @@
-/* PDF version: light pages for reading and printing; hero and diagrams stay on their dark panels. */
+/* PDF version: light pages for reading and printing; hero and diagrams stay on their slate panels. */
 @page { size: A4; }
 html, body.print { background: #fff; }
 body.print { color: #0c1317; font-size: 10.4pt; line-height: 1.55; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -24,6 +24,9 @@ body.print { color: #0c1317; font-size: 10.4pt; line-height: 1.55; -webkit-print
 .print .card, .print .share, .print .post, .print .verdict { background: #f6f8f9; border-color: #dfe5e9; color: #0c1317; }
 .print .card { padding: 12px 14px; margin: 9px 0; border-radius: 8px; }
 .print .card h3 { font-size: 11pt; }
+.print .glossary dt { font-size: 10pt; }
+.print .glossary dd, .print .glossary .gl-note { color: #3d4c56; font-size: 9.6pt; }
+.print .glossary .gl-i { border-color: #dfe5e9; padding: 6px 0; break-inside: avoid; }
 .print .card.method { background: #fff; }
 .print .legend li { color: #3d4c56; font-size: 9.5pt; }
 .print .verdicts { gap: 9px; margin-bottom: 14px; }
@@ -36,12 +39,12 @@ body.print { color: #0c1317; font-size: 10.4pt; line-height: 1.55; -webkit-print
 .print .verdict.analysis .big { color: #a16207; }
 .print .verdict.confirmed .big { color: #c62828; }
 .print .verdict.none .big { color: #0c1317; }
-.print .pill { height: 21px; font-size: 8pt; padding: 0 8px; }
-.print .pill.confirmed { color: #166534; border-color: #16a34a; background: #dcfce7; }
-.print .pill.tested { color: #fff; border-color: #15803d; background: #15803d; }
-.print .pill.analysis { color: #854d0e; border-color: #ca8a04; background: #fef9c3; }
-.print .pill.unknown { color: #991b1b; border-color: #EF5350; background: #fee2e2; }
-.print .pill.none { color: #3d4c56; border-color: #c9d2d8; background: #fff; }
+.print .pill { font-size: 8.4pt; min-height: 0; }
+.print .pill.confirmed, .print .pill.tested { color: #166534; }
+.print .pill.analysis { color: #854d0e; }
+.print .pill.unknown, .print .pill.notyet { color: #991b1b; }
+.print .pill.unknown .dot { background: #EF5350; }
+.print .pill.none { color: #3d4c56; }
 .print sup.cite a { color: #b3261e; background: #fdecea; font-size: 7.5pt; }
 .print .fig sup.cite a, .print .hero sup.cite a { color: var(--accent-text); background: rgba(239, 83, 80, 0.16); }
 .print .fig { padding: 14px 14px 12px; margin: 10px 0; border-radius: 8px; }
@@ -66,8 +69,11 @@ body.print { color: #0c1317; font-size: 10.4pt; line-height: 1.55; -webkit-print
 .print .plist { margin: 0; padding: 0 0 0 0; list-style: none; font-size: 8.6pt; line-height: 1.45; }
 .print .plist > li { margin: 0 0 7px; break-inside: avoid; }
 .print .plist > li > b { color: #c62828; font-family: var(--mono); font-weight: 500; }
-.print .plist .u { color: #5b6b76; font-family: var(--mono); font-size: 7.8pt; overflow-wrap: anywhere; }
+.print .plist .u { color: #5b6b76; font-family: var(--mono); font-size: 7.8pt; overflow-wrap: anywhere; text-decoration: none; }
 .print .plist ul { margin: 3px 0 0 18px; padding: 0; color: #3d4c56; }
 .print .foot { display: none; }
 .print .fig .art.wide svg { max-height: 118mm; width: auto; max-width: 100%; margin: 0 auto; }
 .print .fig { break-before: auto; }
+/* Figure 2 is tall; give it its own page so its labels print at a readable size */
+.print #fig-routes { break-before: page; }
+.print #fig-routes .art.wide svg { max-height: 232mm; }

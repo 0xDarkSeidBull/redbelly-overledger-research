@@ -142,7 +142,7 @@
  {
   "id": "flow-byo",
   "source": "ol-flow",
-  "quote": "Three phases between Client, Gateway, Flow App, and Signer Flow App. The Sign phase hands off via a sub-flow; the Client never sees private-key material."
+  "quote": "The calling Flow App and the Gateway routing the sub-flow never see private keys. Key material is always under your control."
  },
  {
   "id": "flow-own-keys",
@@ -372,7 +372,7 @@
  {
   "id": "t08alt-testnet",
   "source": "task08-alt",
-  "quote": "no major interoperability protocol has deployed core messaging infrastructure (endpoints, gateways, or guardian sets) to"
+  "quote": "as of this writing no major interoperability protocol has deployed core messaging infrastructure (endpoints, gateways, or guardian sets) to Redbelly Testnet specifically"
  },
  {
   "id": "t16-routes",
@@ -447,7 +447,7 @@
  {
   "id": "con-one-call",
   "source": "ol-connectors",
-  "quote": "Overledger lets you register a managed-provider node URL via a single API call. The network then becomes immediately reachable through the Overledger Gateway."
+  "quote": "For networks where it does not matter which node a client connects to, i.e. public permissionless networks, Quant Connect lets you register a managed-provider node URL via a single UI form and Overledger lets you register a managed-provider node URL via a single API call. The network then becomes immediately reachable through the Overledger Gateway."
  },
  {
   "id": "con-node-public-shared",
@@ -483,5 +483,40 @@
   "id": "rb-business-optional",
   "source": "vine-identity",
   "quote": "business verification is also available on the network"
+ },
+ {
+  "id": "ol-fronts-fusion",
+  "source": "ol-overview",
+  "quote": "Single entry point. Authenticates, routes traffic, hosts Orchestration, fronts the Fusion Rollup."
+ },
+ {
+  "id": "ol-connector-family",
+  "source": "ol-overview",
+  "quote": "There is one Connector per DLT family"
+ },
+ {
+  "id": "con-identity-bound",
+  "source": "ol-connectors",
+  "quote": "DLTs that need consortium membership, MSP enrolment, channel agreement, notary trust, privacy-group setup, or any other identity-bound configuration are onboarded through the engagement path"
+ },
+ {
+  "id": "rb-operator-select",
+  "source": "vine-operator",
+  "quote": "Applicants will be selected based upon their previous experience, location and commitment to the Redbelly Project."
+ },
+ {
+  "id": "flow-account-registry",
+  "source": "ol-flow",
+  "quote": "Discover what's available for your account through one of two channels"
+ },
+ {
+  "id": "tk-150-faq",
+  "source": "tk-tech",
+  "quote": "Full EVM compatibility gives connection to more than 150 networks out of the box, with permissioned or permissionless access as your mandate allows."
+ },
+ {
+  "id": "t08alt-lz",
+  "source": "task08-alt",
+  "quote": "LayerZero went live on Redbelly Mainnet"
  }
 ]

@@ -19,6 +19,7 @@ SITE = "https://overledger.vercel.app"
 PDF_NAME = "redbelly-overledger-feasibility-report.pdf"
 DOCX_NAME = "redbelly-overledger-feasibility-report.docx"
 VERIFIED = "15 Oct 2026"
+REPO = "https://github.com/hildecorp/overledger"
 
 R = json.loads((ROOT / "content/report.json").read_text())
 FACTS = {f["id"]: f for f in json.loads((ROOT / "content/facts.json").read_text())}
@@ -141,8 +142,9 @@ def cite_html(ids, mode):
 def rich(t, mode="web"):
     out, last = [], 0
     for m in CITE.finditer(t):
-        out.append(esc(t[last:m.start()]).rstrip())
-        out.append(cite_html(m.group(1), mode))
+        before = esc(t[last:m.start()]).rstrip()
+        cut = before.rfind(" ") + 1
+        out.append(before[:cut] + '<span class="nw">' + before[cut:] + cite_html(m.group(1), mode) + "</span>")
         last = m.end()
     out.append(esc(t[last:]))
     return "".join(out)
@@ -152,6 +154,9 @@ def plain(t):
         nums = sorted({NUM[FACTS[f]["source"]] for f in m.group(1).split()})
         return " [" + ", ".join(f"S{n}" for n in nums) + "]"
     return re.sub(r"\s*\{([a-z0-9 -]+)\}", rep, t)
+
+def src_url(s):
+    return f"{SITE}/{s['url']}" if s.get("local") else s["url"]
 
 def pill(kind, text=None):
     text = text or LABELS.get(kind, kind)
@@ -186,6 +191,7 @@ def table_row(r, mode):
 
 def block_html(s, b, mode):
     lab = b["label"]
+    hx = "h2" if mode == "web" else "h3"
     if lab == "summary_table":
         return ('<table class="tbl rv"><thead><tr><th scope="col">Question</th><th scope="col">Answer today</th></tr></thead><tbody>' +
                 "".join(table_row(r, mode) for r in b["rows"]) + "</tbody></table>")
@@ -193,7 +199,7 @@ def block_html(s, b, mode):
     head = pill(lab) if lab in LABELS else pill("none", "How it was done")
     h = f'<div class="{cls}"><div class="chead">{head}'
     if b.get("heading"):
-        h += f'<h3>{esc(b["heading"])}</h3>'
+        h += f'<{hx}>{esc(b["heading"])}</{hx}>'
     h += "</div>"
     if b.get("text"):
         h += f'<p>{rich(b["text"], mode)}</p>'
@@ -290,19 +296,26 @@ def findings_html(mode):
               f'<p class="q">{esc(k["q"])}</p><p class="big">{esc(k["verdict"])}</p><p class="a">{rich(k["a"] + " {" + k["cite"] + "}", mode)}</p></article>')
     return h + "</div></section>"
 
+def glossary_html(mode):
+    items = "".join(f'<div class="gl-i"><dt>{esc(term)}</dt><dd>{rich(d, mode)}</dd></div>' for term, d in R["glossary"])
+    hx = "h2" if mode == "web" else "h3"
+    return (f'<div class="card rv glossary" id="glossary"><div class="chead"><{hx}>Plain words</{hx}></div>'
+            f'<p class="gl-note">The technical terms this report uses, in one or two lines each. Where a term is Overledger\'s or Redbelly\'s own, the source is cited.</p><dl>{items}</dl></div>')
+
 def post_count(t):
     return len(t.replace("{site}", "x" * 23))
 
 def summary_html(mode):
     cs = R["community_summary"]; n = len(R["sections"]) + 1
-    paras = "".join(f'<p class="sum-p" data-raw="{esc(p)}">{esc(p)}</p>' for p in cs["paragraphs"])
+    paras = "".join(f'<p class="sum-p" data-raw="{esc(p.replace("{site}", SITE))}">{esc(p.replace("{site}", SITE))}</p>' for p in cs["paragraphs"])
     tag = "h1" if mode == "web" else "h2"
     h = (f'<section class="s" id="summary" aria-labelledby="h-summary">' + (chapter_top("summary") if mode == "web" else "") + f'<div class="rv"><p class="kicker"><span class="bar"></span><span class="num">{nn(n)}</span>Share it</p>'
          f'<{tag} id="h-summary">Community summary</{tag}><p class="intro">Plain language, ready for the DAO to share. Copy the paragraphs, a single post, or the whole thread.</p></div>')
     btn = lambda attrs, label, msg, extra="": (f'<button class="copy{extra}" type="button" {attrs} data-msg="{msg}">{ICON["copy"]}<span class="lbl">{label}</span></button>')
-    h += (f'<div class="share rv"><div class="shead"><h3>A few paragraphs</h3>' +
+    hx = "h2" if mode == "web" else "h3"
+    h += (f'<div class="share rv"><div class="shead"><{hx}>A few paragraphs</{hx}>' +
           ("" if mode == "print" else btn('data-copy=".sum-p"', "Copy summary", "Summary copied", " primary")) + f'</div><div class="body">{paras}</div></div>')
-    h += (f'<div class="share rv"><div class="shead"><h3>As an X thread, {len(cs["thread"])} posts</h3>' +
+    h += (f'<div class="share rv"><div class="shead"><{hx}>As an X thread, {len(cs["thread"])} posts</{hx}>' +
           ("" if mode == "print" else btn('data-copy=".post-text"', "Copy all posts", "Thread copied", " primary")) + '</div><ol class="posts">')
     for i, t in enumerate(cs["thread"], 1):
         txt = t.replace("{site}", SITE); c = post_count(t)
@@ -320,6 +333,9 @@ def head(title, desc, path, extra=""):
             f'<title>{esc(title)}</title><meta name="description" content="{esc(desc)}"><meta name="theme-color" content="#0c1317">'
             f'<link rel="canonical" href="{url}"><meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(desc)}">'
             f'<meta property="og:type" content="article"><meta property="og:url" content="{url}"><meta property="og:site_name" content="Redbelly DAO community research">'
+            f'<meta property="og:image" content="{SITE}/brand/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">'
+            f'<meta property="og:image:alt" content="{esc(R["title"])} Feasibility research, sources last verified {VERIFIED}.">'
+            f'<meta name="twitter:card" content="summary_large_image">'
             f'<link rel="icon" type="image/png" sizes="32x32" href="/brand/icon-32.png"><link rel="icon" type="image/png" sizes="512x512" href="/brand/icon.png">'
             f'<link rel="apple-touch-icon" href="/brand/icon-180.png">'
             f'<link rel="preload" href="/fonts/be-vietnam-pro-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>'
@@ -330,7 +346,7 @@ def header(current):
         cur = ' aria-current="page"' if key == current else ""
         return f'<a href="{href}"{cur}>{label}</a>'
     return ('<a class="skip" href="#main">Skip to content</a><div class="progress" aria-hidden="true"><span></span></div>'
-            '<header class="top"><a class="brand" href="/"><img src="/brand/dao-logo-on-dark.png" alt="Redbelly DAO, home" width="62" height="44"></a>'
+            '<header class="top"><a class="brand" href="/"><img src="/brand/dao-logo.png" alt="Redbelly DAO, home" width="62" height="44"></a>'
             f'<nav aria-label="Pages">{link("/", "Report", "report")}{link("/sources", "Sources", "sources")}</nav></header>')
 
 def toc_html(items, extra_links, head_text):
@@ -341,7 +357,7 @@ def toc_html(items, extra_links, head_text):
 
 def foot():
     return ('<footer class="foot"><div><p>Feasibility research only. Redbelly and Quant have no announced partnership or talks, and nothing on this site suggests otherwise.</p>'
-            f'<p>Sources last verified {VERIFIED}. Every claim links to the source list; page snapshots, tests and the check script are in the project repository that came with this report.</p></div>'
+            f'<p>Sources last verified {VERIFIED}. Every claim links to the source list. Saved copies of every source and our test logs are under <a href="/evidence/manifest.json">/evidence</a>, and the build and check scripts are in the project repository, <a href="{REPO}">{REPO.replace("https://", "")}</a>.</p></div>'
             '<div><p>Fonts: Be Vietnam Pro and JetBrains Mono, SIL Open Font License 1.1. Logo and icon: Redbelly DAO, from the Task Board brand kit.</p>'
             '<p>Diagrams drawn for this report. No third-party images.</p></div></footer>')
 
@@ -435,7 +451,7 @@ def home_page(bodies):
     legend = ('<div class="card rv legend-card"><div class="chead"><h3>How to read the labels</h3></div><ul class="legend">' +
               "".join(f'<li>{pill(k)}<span>{esc(v)}</span></li>' for k, v in R["labels"].items()) + "</ul></div>")
     inner = (f'{hero}<div class="layout">{report_nav("home")}<div class="content">' +
-             findings_html("web") + legend + chapters_html(bodies) + foot() + "</div></div>")
+             findings_html("web") + legend + glossary_html("web") + chapters_html(bodies) + foot() + "</div></div>")
     first = chapter_url(CH_IDS[0])
     return page(R["title"] + " | Redbelly DAO research", R["subtitle"], "/", "report", inner, dock("home"),
                 f'<link rel="prefetch" href="{first}">')
@@ -445,7 +461,7 @@ def chapter_page(cid, body):
     (ph, _), (nh, _) = neighbours(cid)
     title = f"{i}. {CH_TITLE[cid]} | {R['title']}"
     s = SEC.get(cid)
-    desc = re.sub(r"\s*\{[^}]+\}", "", s["intro"]) if s and s.get("intro") else f"Chapter {i} of {len(CHAPTERS)} of the feasibility report: {R['subtitle']}."
+    desc = s["description"] if s else R["community_summary"]["description"]
     inner = (f'<div class="layout">{report_nav(cid)}<div class="content chapter">{body}{foot()}</div></div>')
     extra = f'<link rel="prev" href="{ph}"><link rel="next" href="{nh}"><link rel="prefetch" href="{nh}">'
     return page(title, desc, chapter_url(cid), "report", inner, dock(cid), extra)
@@ -484,7 +500,7 @@ def sources_page():
     toc, chips = toc_html(items, f'<a href="/">{ICON["left"]}Back to the report</a><a href="/downloads/SOURCES.md">{ICON["doc"]}Source list as Markdown</a>', "Sources")
     hero = (f'<section class="hero" aria-labelledby="title"><p class="kicker"><span class="bar"></span>Source list</p><h1 id="title">Where every fact comes from</h1>'
             f'<p class="lead">The report cites each source as S1, S2 and so on. Under each one are the exact words the report relies on, so you can find them on the page with Ctrl+F, and links back to where each is used.</p>'
-            f'<div class="notice">{ICON["info"]}<p>A text copy of every page as it read on {VERIFIED} is kept in the project repository under evidence/snapshots, with its SHA-256 in evidence/manifest.json. The check script fails if any quote is missing from its copy.</p></div>'
+            f'<div class="notice">{ICON["info"]}<p>A text copy of every page as it read on {VERIFIED} is published here under /evidence/snapshots and in the project repository, with its SHA-256 in <a href="/evidence/manifest.json">evidence/manifest.json</a>. The check script fails if any quote is missing from its copy.</p></div>'
             f'<p class="meta-row"><span><b>{len(ORDER)}</b> sources</span><span><b>{len(USED)}</b> quoted facts</span><span>Last verified <b>{VERIFIED}</b></span></p>'
             f'<div class="actions"><a class="btn primary" href="/">{ICON["left"]}Back to the report</a><a class="btn" href="/downloads/{PDF_NAME}">{ICON["pdf"]}Download PDF</a>'
             f'<a class="btn" href="/downloads/SOURCES.md">{ICON["doc"]}Source list as Markdown</a></div></section>')
@@ -495,13 +511,13 @@ def sources_page():
         for sid in srcs:
             s = SOURCES[sid]; n = NUM[sid]
             if s.get("local"):
-                url = f'<a class="su" href="/{esc(s["url"])}">{esc(s["url"])}</a>'
+                url = f'<a class="su" href="/{esc(s["url"])}">{esc(src_url(s))}</a>'
             else:
                 url = f'<a class="su" href="{esc(s["url"])}" target="_blank" rel="noopener">{esc(s["url"])}</a>'
             rel, sha, when = snapshot_info(s)
             body += (f'<article class="src" id="s{n}"><div class="sh"><span class="sn">S{n}</span><div><span class="sp">{esc(s["publisher"])}</span>'
                      f'<p class="st">{esc(s["title"])}</p>{url}</div></div>'
-                     f'<p class="snap">Saved copy: {esc(rel)} · captured {esc(when)} · SHA-256 {sha[:12]}…{sha[-6:]}</p><ul class="qs">')
+                     f'<p class="snap">Saved copy: <a href="/{esc(rel)}">{esc(rel)}</a> · captured {esc(when)} · SHA-256 {sha[:12]}…{sha[-6:]}</p><ul class="qs">')
             for f in (f for f in FACTS.values() if f["source"] == sid and f["id"] in USED):
                 used = ", ".join(f'<a href="{used_href(w)}">{esc(where_label(w)[0])}</a>' for w in USED_IN[f["id"]])
                 body += (f'<li><div><q>{esc(f["quote"])}</q><span class="used">Used in {used}</span></div>'
@@ -530,17 +546,17 @@ def drop_small_screen_rules(css):
 def print_page():
     fonts = (PUB / "fonts").as_uri()
     css = drop_small_screen_rules((ROOT / "scripts/site.css").read_text()).replace('url("fonts/', f'url("{fonts}/') + (ROOT / "scripts/print.css").read_text()
-    logo = (PUB / "brand/dao-logo-on-dark.png").as_uri()
+    logo = (PUB / "brand/dao-logo.png").as_uri()
     hero = (f'<section class="hero"><img class="plogo" src="{logo}" alt="Redbelly DAO"><p class="kicker"><span class="bar"></span>Redbelly DAO community research · Feasibility report · {VERIFIED}</p>'
             f'<h1>{esc(R["title"])}</h1><p class="lead">{esc(R["subtitle"])}.</p><div class="notice">{ICON["info"]}<p>{rich(R["status_note"], "print")}</p></div>'
-            f'<p class="meta-row"><span><b>{len(ORDER)}</b> sources</span><span><b>{len(USED)}</b> quoted facts</span><span>Web version <b>{SITE.replace("https://", "")}</b></span></p></section>')
+            f'<p class="meta-row"><span><b>{len(ORDER)}</b> sources</span><span><b>{len(USED)}</b> quoted facts</span><span>Web version <a href="{SITE}"><b>{SITE.replace("https://", "")}</b></a></span></p></section>')
     legend = ('<div class="card legend-card"><div class="chead"><h3>How to read the labels</h3></div><ul class="legend">' +
               "".join(f'<li>{pill(k)}<span>{esc(v)}</span></li>' for k, v in R["labels"].items()) + "</ul></div>")
-    body = findings_html("print") + legend + "".join(section_html(s, "print") for s in R["sections"]) + summary_html("print")
-    src = '<section class="s srcs" id="sources"><p class="kicker"><span class="bar"></span>Sources</p><h2>Source list</h2><p class="intro">Each source with the exact words this report relies on. Page copies with SHA-256 hashes are in the project repository.</p><ol class="plist">'
+    body = findings_html("print") + legend + glossary_html("print") + "".join(section_html(s, "print") for s in R["sections"]) + summary_html("print")
+    src = f'<section class="s srcs" id="sources"><p class="kicker"><span class="bar"></span>Sources</p><h2>Source list</h2><p class="intro">Each source with the exact words this report relies on. Saved copies of every page, with SHA-256 hashes, are at <a href="{SITE}/evidence/manifest.json">{SITE.replace("https://", "")}/evidence</a> and in the project repository, <a href="{REPO}">{REPO.replace("https://", "")}</a>.</p><ol class="plist">'
     for sid in ORDER:
         s = SOURCES[sid]; n = NUM[sid]
-        src += (f'<li id="s{n}"><b>S{n}</b> <span>{esc(s["publisher"])}: {esc(s["title"])}</span><br><span class="u">{esc(s["url"] if not s.get("local") else s["url"] + " (project repository)")}</span><ul>' +
+        src += (f'<li id="s{n}"><b>S{n}</b> <span>{esc(s["publisher"])}: {esc(s["title"])}</span><br><a class="u" href="{esc(src_url(s))}">{esc(src_url(s))}</a><ul>' +
                 "".join(f'<li>“{esc(f["quote"])}”</li>' for f in FACTS.values() if f["source"] == sid and f["id"] in USED) + "</ul></li>")
     src += "</ol></section>"
     return (f'<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><title>{esc(R["title"])}</title><style>{css}</style></head>'
@@ -566,6 +582,33 @@ def render_pngs():
         b.close()
     return out
 
+def docx_link(par, url, text=None):
+    """Adds a real, clickable hyperlink run to a Word paragraph."""
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+    from docx.opc.constants import RELATIONSHIP_TYPE as RT
+    rid = par.part.relate_to(url, RT.HYPERLINK, is_external=True)
+    h = OxmlElement("w:hyperlink"); h.set(qn("r:id"), rid)
+    r = OxmlElement("w:r"); pr = OxmlElement("w:rPr")
+    c = OxmlElement("w:color"); c.set(qn("w:val"), "B3272A"); pr.append(c)
+    u = OxmlElement("w:u"); u.set(qn("w:val"), "single"); pr.append(u)
+    r.append(pr); t = OxmlElement("w:t"); t.text = text or url; t.set(qn("xml:space"), "preserve"); r.append(t)
+    h.append(r); par._p.append(h)
+
+def clean_app_props(path):
+    """python-docx's template names a word processor in docProps/app.xml; the report was not written with it."""
+    import zipfile, shutil, tempfile
+    tmp = Path(tempfile.mkstemp(suffix=".docx")[1])
+    with zipfile.ZipFile(path) as zin, zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as zout:
+        for item in zin.infolist():
+            data = zin.read(item.filename)
+            if item.filename == "docProps/app.xml":
+                data = re.sub(rb"<Application>.*?</Application>", b"<Application></Application>", data)
+                data = re.sub(rb"<AppVersion>.*?</AppVersion>", b"", data)
+                data = re.sub(rb"<Company>.*?</Company>", b"<Company></Company>", data)
+            zout.writestr(item, data)
+    shutil.move(str(tmp), path)
+
 def build_docx(path, pngs):
     from docx import Document
     from docx.shared import Pt, RGBColor, Cm
@@ -575,11 +618,15 @@ def build_docx(path, pngs):
         sec.left_margin = sec.right_margin = Cm(2)
     d.add_heading(R["title"], 0)
     d.add_paragraph(R["subtitle"] + ".").runs[0].italic = True
-    d.add_paragraph(f"Redbelly DAO community research. Feasibility report, sources last verified {VERIFIED}. Web version: {SITE}")
+    p0 = d.add_paragraph(f"Redbelly DAO community research. Feasibility report, sources last verified {VERIFIED}. Web version: "); docx_link(p0, SITE)
     d.add_paragraph(plain(R["status_note"]))
     d.add_heading("How to read the labels", 1)
     for k, v in R["labels"].items():
         p = d.add_paragraph(style="List Bullet"); r = p.add_run(LABELS[k] + ": "); r.bold = True; p.add_run(v)
+    d.add_heading("Plain words", 1)
+    d.add_paragraph("The technical terms this report uses, in one or two lines each. Where a term is Overledger's or Redbelly's own, the source is cited.")
+    for term, dfn in R["glossary"]:
+        p = d.add_paragraph(style="List Bullet"); r = p.add_run(term + ": "); r.bold = True; p.add_run(plain(dfn))
     d.add_heading("Key findings", 1)
     t = d.add_table(rows=1, cols=4); t.style = "Light Grid Accent 2"
     for i, x in enumerate(("Question", "Short answer", "Detail", "Status")):
@@ -620,16 +667,18 @@ def build_docx(path, pngs):
     cs = R["community_summary"]
     d.add_heading(f"{len(R['sections']) + 1}. Community summary", 1)
     for p in cs["paragraphs"]:
-        d.add_paragraph(p)
+        d.add_paragraph(p.replace("{site}", SITE))
     d.add_heading("As an X thread", 2)
     for x in cs["thread"]:
         d.add_paragraph(x.replace("{site}", SITE), style="List Number")
     d.add_heading("Source list", 1)
     d.add_paragraph("Every factual claim cites one of these sources. Under each source are the exact words the report relies on.")
+    pr = d.add_paragraph("Saved copies of every source page, with SHA-256 hashes: "); docx_link(pr, f"{SITE}/evidence/manifest.json")
+    pr = d.add_paragraph("Project repository with the build and check scripts: "); docx_link(pr, REPO)
     for sid in ORDER:
         s = SOURCES[sid]
         p = d.add_paragraph(); r = p.add_run(f"S{NUM[sid]}  {s['publisher']}: {s['title']}"); r.bold = True
-        d.add_paragraph(s["url"] + (" (project repository)" if s.get("local") else ""))
+        docx_link(d.add_paragraph(), src_url(s))
         for f in FACTS.values():
             if f["source"] == sid and f["id"] in USED:
                 d.add_paragraph("“" + f["quote"] + "”", style="List Bullet")
@@ -639,6 +688,7 @@ def build_docx(path, pngs):
     from datetime import datetime, timezone
     cp.created = cp.modified = datetime(2026, 10, 15, tzinfo=timezone.utc); cp.revision = 1
     d.save(path)
+    clean_app_props(path)
 
 # ---------- Markdown ----------
 def sources_md():
@@ -647,7 +697,7 @@ def sources_md():
     for sid in ORDER:
         s = SOURCES[sid]
         L.append(f"**S{NUM[sid]}. {s['publisher']}**: {s['title']}  ")
-        L.append(f"{s['url']}" + (" (in this repository)" if s.get("local") else ""))
+        L.append(src_url(s) + (f" (also `{s['url']}` in the repository)" if s.get("local") else ""))
         L.append("")
         for f in FACTS.values():
             if f["source"] == sid and f["id"] in USED:
@@ -657,7 +707,7 @@ def sources_md():
 
 def summary_md():
     cs = R["community_summary"]
-    L = ["# Community summary", "", "Plain language summary of the report, ready to share.", ""] + [p + "\n" for p in cs["paragraphs"]]
+    L = ["# Community summary", "", "Plain language summary of the report, ready to share.", ""] + [p.replace("{site}", SITE) + "\n" for p in cs["paragraphs"]]
     L += ["## As an X thread", ""] + [t.replace("{site}", SITE) + "\n" for t in cs["thread"]]
     return "\n".join(L)
 
@@ -667,19 +717,49 @@ def prepare_assets():
     (PUB / "evidence/tests").mkdir(parents=True, exist_ok=True)
     for f in (ROOT / "evidence/tests").glob("*.txt"):
         shutil.copy(f, PUB / "evidence/tests" / f.name)
+    # the saved copy of every source and the manifest of hashes are published with the site, so a reader can check any quote
+    shutil.rmtree(PUB / "evidence/snapshots", ignore_errors=True)
+    shutil.copytree(ROOT / "evidence/snapshots", PUB / "evidence/snapshots")
+    shutil.copy(ROOT / "evidence/manifest.json", PUB / "evidence/manifest.json")
     from PIL import Image
     icon = PUB / "brand/icon.png"
     for size, name in ((32, "icon-32.png"), (180, "icon-180.png")):
         Image.open(icon).convert("RGBA").resize((size, size), Image.LANCZOS).save(PUB / "brand" / name, optimize=True)
-    logo = PUB / "brand/dao-logo-on-dark.png"
+    logo = PUB / "brand/dao-logo.png"
     im = Image.open(logo)
     if im.height > 200:
         im = im.convert("RGBA"); w = round(im.width * 176 / im.height)
         im.resize((w, 176), Image.LANCZOS).save(logo, optimize=True)
 
+def make_og_image():
+    """The 1200 x 630 link preview image (brand kit: the Open Graph size for any linked page)."""
+    from playwright.sync_api import sync_playwright
+    fonts = (PUB / "fonts").as_uri(); logo = (PUB / "brand/dao-logo.png").as_uri()
+    page = (f'<!doctype html><html><head><meta charset="utf-8"><style>'
+            f'@font-face{{font-family:"BV";src:url({fonts}/be-vietnam-pro-latin-700-normal.woff2);font-weight:700}}'
+            f'@font-face{{font-family:"BV";src:url({fonts}/be-vietnam-pro-latin-400-normal.woff2);font-weight:400}}'
+            f'@font-face{{font-family:"JM";src:url({fonts}/jetbrains-mono-latin-500-normal.woff2);font-weight:500}}'
+            'html,body{margin:0}body{width:1200px;height:630px;background:#0c1317;color:#f1f5f8;font-family:BV,sans-serif;position:relative;overflow:hidden}'
+            '.band{position:absolute;inset:40px;background:#1d3140;border-radius:8px;padding:56px 64px}'
+            '.k{display:flex;align-items:center;gap:14px;font:500 22px JM,monospace;letter-spacing:.08em;text-transform:uppercase;color:#8fa1ad}'
+            '.k i{display:block;width:40px;height:6px;border-radius:3px;background:#EF5350}'
+            'h1{font-size:68px;line-height:1.06;letter-spacing:-.02em;margin:26px 0 22px;max-width:860px}'
+            'p{font-size:28px;line-height:1.4;color:#c2ced6;margin:0;max-width:820px}'
+            '.v{position:absolute;left:64px;bottom:52px;font:500 22px JM,monospace;color:#ffb3ae}'
+            'img{position:absolute;right:64px;bottom:44px;height:84px}</style></head><body><div class="band">'
+            '<div class="k"><i></i>Redbelly DAO community research</div>'
+            f'<h1>{esc(R["title"])}</h1><p>Feasibility research from public sources. No partnership or talks between Redbelly and Quant have been announced.</p>'
+            f'<div class="v">Sources last verified {VERIFIED}</div><img src="{logo}" alt=""></div></body></html>')
+    tmp = ROOT / "build/og.html"; tmp.write_text(page)
+    with sync_playwright() as p:
+        b = p.chromium.launch(); pg = b.new_page(viewport={"width": 1200, "height": 630})
+        pg.goto(tmp.as_uri()); pg.evaluate("document.fonts.ready.then(() => true)"); pg.wait_for_timeout(300)
+        pg.screenshot(path=str(PUB / "brand/og.png")); b.close()
+
 def main():
     (PUB / "downloads").mkdir(parents=True, exist_ok=True); (ROOT / "build").mkdir(exist_ok=True)
     prepare_assets()
+    make_og_image()
     bodies = chapter_bodies()
     (PUB / "index.html").write_text(home_page(bodies))
     chap_dir = PUB / "chapters"

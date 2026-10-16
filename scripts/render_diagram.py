@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Renders one diagram SVG to PNG and measures it, so a diagram can be checked by eye and by numbers.
   python3 scripts/render_diagram.py public/diagrams/levels-wide.svg out.png [display_width]
-display_width is the width the SVG is shown at on the page: 860 for a wide diagram (desktop column),
-358 for a narrow one (390 px phone minus margins). The report prints JSON with:
-  min_font_px     smallest rendered text size at that display width (must be >= 12 on the phone, >= 13 on desktop)
+display_width is the width the SVG is drawn at on the page: 778 for a wide diagram (the desktop content column),
+332 for a narrow one on a 390 px phone (the narrow version is also used up to 860 px, drawn at up to 520 px).
+The report prints JSON with:
+  min_font_px     smallest rendered text size at that display width (aim for >= 11 everywhere; on a phone the
+                  Full screen button shows the wide version at its natural size, where the smallest text is 14 px)
   overlaps        pairs of text elements whose boxes overlap
   outside         text elements that spill outside the SVG viewBox
   text_over_edge  text elements that cross the edge of the rect or path they sit in
@@ -17,7 +19,7 @@ FONTS = (ROOT / "public/fonts").as_uri()
 
 def main():
     svg_path, out = Path(sys.argv[1]), sys.argv[2]
-    width = int(sys.argv[3]) if len(sys.argv) > 3 else 860
+    width = int(sys.argv[3]) if len(sys.argv) > 3 else 778
     svg = svg_path.read_text()
     page = f"""<!doctype html><html><head><meta charset="utf-8"><style>
 @font-face{{font-family:"Be Vietnam Pro";src:url({FONTS}/be-vietnam-pro-latin-400-normal.woff2);font-weight:400}}

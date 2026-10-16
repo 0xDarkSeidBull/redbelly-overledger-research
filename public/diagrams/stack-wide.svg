@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 708" role="img" aria-labelledby="stack-w-title stack-w-desc">
   <title id="stack-w-title">Overledger in one picture</title>
-  <desc id="stack-w-desc">An institution or app uses one login and one interface to reach the Overledger Gateway, which holds Connectors, Flow Apps and a Firewall, and Connectors reach the self-serve families and permissioned networks. The Fusion Rollup is a separate shared layer connected at testnet launch to Ethereum Sepolia, Polygon Amoy and the Quant permissioned Besu testnet, while Redbelly is not in the documented list.</desc>
+  <desc id="stack-w-desc">An institution or app uses one login and one interface to reach the Overledger Gateway, which holds Connectors, Flow Apps and a Firewall, and Connectors reach the self-serve families and permissioned networks. The Gateway is also the way in to the Fusion Rollup, a separate layer connected at testnet launch to Ethereum Sepolia, Polygon Amoy and the Quant permissioned Besu testnet, while Redbelly is not in that documented launch list.</desc>
   <defs>
     <marker id="stack-w-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0 0 L10 5 L0 10 z" fill="#8fa1ad"/>
@@ -60,7 +60,7 @@
   <rect x="560" y="344" width="380" height="348" rx="6" fill="#0c1317" stroke="#223039" stroke-width="1.5"/>
   <rect x="580" y="364" width="340" height="74" rx="6" fill="#17222a" stroke="#263641" stroke-width="1.5"/>
   <text x="600" y="397" font-family="Be Vietnam Pro, sans-serif" font-size="19" font-weight="700" fill="#f1f5f8">Fusion Rollup</text>
-  <text x="600" y="421" font-family="Be Vietnam Pro, sans-serif" font-size="15" fill="#c2ced6">a separate shared layer</text>
+  <text x="600" y="421" font-family="Be Vietnam Pro, sans-serif" font-size="15" fill="#c2ced6">a separate layer, via the Gateway</text>
   <path d="M604 438 V591 H628" fill="none" stroke="#8fa1ad" stroke-width="1.5"/>
   <text x="628" y="463" font-family="JetBrains Mono, monospace" font-size="15" letter-spacing="1" fill="#8fa1ad">CONNECTED AT TESTNET LAUNCH</text>
   <path d="M604 495 H628" fill="none" stroke="#8fa1ad" stroke-width="1.5"/>
@@ -73,5 +73,8 @@
   <text x="646" y="596.5" font-family="Be Vietnam Pro, sans-serif" font-size="15" font-weight="500" fill="#f1f5f8">Quant permissioned Besu testnet</text>
   <rect x="628" y="630" width="292" height="38" rx="6" fill="none" stroke="#8fa1ad" stroke-width="1.5" stroke-dasharray="5 4"/>
   <path d="M646 643 L658 655 M658 643 L646 655" fill="none" stroke="#EF5350" stroke-width="1.75" stroke-linecap="round"/>
-  <text x="670" y="654.5" font-family="Be Vietnam Pro, sans-serif" font-size="15" font-weight="500" fill="#8fa1ad">Redbelly: not listed</text>
+  <text x="670" y="654.5" font-family="Be Vietnam Pro, sans-serif" font-size="15" font-weight="500" fill="#8fa1ad">Redbelly: not in launch list</text>
+  <!-- the Gateway is the way in to the Fusion Rollup -->
+  <circle cx="750" cy="316" r="3" fill="#8fa1ad"/>
+  <line x1="750" y1="316" x2="750" y2="361" stroke="#8fa1ad" stroke-width="1.5" marker-end="url(#stack-w-arrow)"/>
 </svg>
