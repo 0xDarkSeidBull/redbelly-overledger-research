@@ -348,7 +348,7 @@
    "blocks": [
     {
      "label": "method",
-     "text": "Every source page was saved as a text snapshot on 15 October 2026, with its address, capture time and SHA-256 hash in evidence/manifest.json. The snapshots, the manifest and our test logs are published with the website under /evidence and in the project repository, https://github.com/hildecorp/overledger. Each factual claim cites a fact, and each fact quotes its source word for word. The script scripts/check.py in that repository confirms that every quote is in its snapshot, that every Confirmed paragraph cites a source, and that the text has no partnership wording, no investment language, no dashes and no emoji. We ran the RPC and API calls ourselves, and kept the full output in evidence/tests. We did not create an Overledger account, so nothing here was tested inside Overledger."
+     "text": "Every source page was saved as a text snapshot on 15 October 2026, with its address, capture time and SHA-256 hash in evidence/manifest.json. The snapshots, the manifest and our test logs are published with the website under /evidence and in the project repository, https://github.com/hildecorp/redbelly-dao-overledger. Each factual claim cites a fact, and each fact quotes its source word for word. The script scripts/check.py in that repository confirms that every quote is in its snapshot, that every Confirmed paragraph cites a source, and that the text has no partnership wording, no investment language, no dashes and no emoji. We ran the RPC and API calls ourselves, and kept the full output in evidence/tests. We did not create an Overledger account, so nothing here was tested inside Overledger."
     }
    ],
    "short": "How this was made",

@@ -19,7 +19,7 @@ SITE = "https://overledger.vercel.app"
 PDF_NAME = "redbelly-overledger-feasibility-report.pdf"
 DOCX_NAME = "redbelly-overledger-feasibility-report.docx"
 VERIFIED = "15 Oct 2026"
-REPO = "https://github.com/hildecorp/overledger"
+REPO = "https://github.com/hildecorp/redbelly-dao-overledger"
 
 R = json.loads((ROOT / "content/report.json").read_text())
 FACTS = {f["id"]: f for f in json.loads((ROOT / "content/facts.json").read_text())}
